@@ -1,53 +1,10 @@
-# ONT long-read alignment with minimap2
-
+# ONT long-read alignment with [Winnowmap](https://github.com/marbl/Winnowmap)
+Once long-reads were trimmed and filtered, they were aligned to the kākāpō reference assembly (Jane's genome) for SV discovery. As with the Illumina data, reads were aligned with or without the W sex chromosome depending on the bird's sex. 
 ```
 data=/kakapo-data/ONT/
 mref=/kakapo-data/References/kakapo_no_Wchromosome.fa
 fref=/kakapo-data/References/kakapo_full_ref.fa
-lambda=${data}DNA_CS.fasta
-aves=aves_odb10
 source ~/anaconda3/etc/profile.d/conda.sh
-```
-
-## ONT read alignment with minimap2
-
-```
-for male in B C F I J K
-    do
-    echo "Running minmap2 alignment for ${male} ONT trimmed reads..."
-    minimap2 -ax map-ont ${mref} ${data}trimmed/${male}_q10_5kbtrim.fastq.gz > ${data}minimap/alignment/sam/${male}.sam &
-done
-wait
-
-for female in A D C2 G H L
-    do
-    echo "Running minimap2 alignment for ${female} ONT trimmed reads..."
-    minimap2 -ax map-ont ${fref} ${data}trimmed/${female}_q10_5kbtrim.fastq.gz > ${data}minimap/alignment/sam/${female}.sam &
-done
-wait
-
-for male in B C F I J K
-    do
-    echo "Converting SAM to BAM for ${male}..."
-    samtools view -@ 64 -T ${mref} -b ${data}minimap/alignment/sam/${male}.sam | \
-        samtools sort -@ 64 -o ${data}minimap/alignment/bam/${male}.bam
-done
-
-for female in A D C2 G H L
-    do
-    echo "Converting SAM to BAM for ${female}..."
-    samtools view -@ 64 -T ${fref} -b ${data}minimap/alignment/sam/${female}.sam | \
-        samtools sort -@ 64 -o ${data}minimap/alignment/bam/${female}.bam
-done
-```
-Chromosome coverage was then visualised as per:
-```
-for bam in ${data}minimap/alignment/bam/*.bam
-    do
-    base=$(basename $bam .bam)
-    echo "Estimating coverage for $base..."
-    samtools coverage $bam -o ${base}_coverage.tsv &
-done
 ```
 ## ONT read alignment with winnowmap
 
