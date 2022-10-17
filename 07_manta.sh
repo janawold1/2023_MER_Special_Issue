@@ -3,7 +3,7 @@
 #Script for running the MANTA software package. Intended for structural
 #variant calling. MANTA is aprogram for the detection of structural variants
 #from paired-end sequence data. Because running all individuals together is taxing on 
-#MANTA, this program was run in 7 batches for females and X batches for males.
+#MANTA, this program was run in 7 batches for females and 9 batches for males.
 #####################################################################################
 ##Setting fixed variables
 fref=~/Kakapo/References/kakapo_full_ref.fa
