@@ -38,6 +38,7 @@ for fq in ${data}fastq/*.fastq.gz
         gunzip -c ${data}porechop/${base}_porechop.fastq.gz | \
         NanoLyse -r ${lambda} | \
         NanoFilt -q 10 -l ${length}000 > ${data}trimmed/${base}_q10_${length}kbtrim.fastq
+        gzip ${data}trimmed/${base}_q10_${length}kbtrim.fastq
     done &
 done
 conda deactivate nanofilt
