@@ -48,7 +48,6 @@ for sam in ${data}winnowmap/alignment/sam/*.sam
             samtools view -@64 -T ${mref} -b $sam | samtools sort -@ 64 -o ${data}winnowmap/alignment/bam/${base}.bam
     fi
 done
-
 ```
 ## Read Mapping Quality
 Depths were estimated using [mosdepth v0.3.3](https://github.com/brentp/mosdepth) and [qualimap vX.X](). Summaries were visualised using [multiqc]().
