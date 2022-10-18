@@ -16,8 +16,10 @@ meryl count k=15 ${fref} output kakapo_full.meryl
 meryl count k=15 ${mref} output kakapo_noW.meryl
 
 meryl print greater-than distinct=0.9998 kakapo_full.meryl > kakapo_full_repetitive_k15.txt
-meryl pring greater-than distinct=0.9998 kakapo_noW.meryl > kakapo_noW_repetitive_k15.txt
-
+meryl print greater-than distinct=0.9998 kakapo_noW.meryl > kakapo_noW_repetitive_k15.txt
+```
+Alignments were run separately for males and females. To save some time, loops were set to run through each trimmed length simultaneously for each individual.
+```
 for male in Bill Blades Gulliver Rangi Sass Smoko
     do
     for length in {3,4,5,10}
@@ -25,8 +27,7 @@ for male in Bill Blades Gulliver Rangi Sass Smoko
         winnowmap -W kakapo_noW_repetitive_k15.txt -ax map-ont ${mref} ${data}trimmed/${male}_q10_${length}kbtrim.fastq.gz > ${data}winnowmap/alignment/sam/${male}_${length}kb.sam &
     done
     wait
-done
-
+done &
 for female in Bella Kuia Margaret-Maree Sue
     do
     for length in {3,4,5,10}
@@ -35,7 +36,10 @@ for female in Bella Kuia Margaret-Maree Sue
     done
     wait
 done
-
+wait
+```
+Then SAM files were sorted and converted to BAM format as per below.
+```
 for sam in ${data}winnowmap/alignment/sam/*.sam
     do
     base=$(basename $sam .sam)
@@ -50,7 +54,7 @@ for sam in ${data}winnowmap/alignment/sam/*.sam
 done
 ```
 ## Read Mapping Quality
-Depths were estimated using [mosdepth v0.3.3](https://github.com/brentp/mosdepth) and [qualimap vX.X](). Summaries were visualised using [multiqc]().
+Depths were estimated using [mosdepth v0.3.3](https://github.com/brentp/mosdepth) and [qualimap v2.2.2](http://qualimap.conesalab.org/). Summaries were visualised using [multiqc v1.9](https://github.com/ewels/MultiQC).
 
 For future inclusion, samples had to have a coverage of >=4x.
 ```
