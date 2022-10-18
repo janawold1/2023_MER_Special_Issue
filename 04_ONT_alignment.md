@@ -54,7 +54,7 @@ for sam in ${data}winnowmap/alignment/sam/*.sam
 done
 ```
 ## Read Mapping Quality
-Depths were estimated using [mosdepth v0.3.3](https://github.com/brentp/mosdepth) and [qualimap v2.2.2](http://qualimap.conesalab.org/). Summaries were visualised using [multiqc v1.9](https://github.com/ewels/MultiQC).
+Depths were estimated using [Mosdepth v0.3.3](https://github.com/brentp/mosdepth) and [Qualimap v2.2.2](http://qualimap.conesalab.org/). Summaries were visualised using [MultiQC v1.9](https://github.com/ewels/MultiQC).
 
 For future inclusion, samples had to have a coverage of >=4x.
 ```
