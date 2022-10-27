@@ -189,15 +189,15 @@ done
 ```
 And sample manifests were created as per:
 ```
-for stat in nodup_autosome_stat/Adelaide_nodup_autosomes.stats
+for stat in nodup_autosome_stat/*.stats
     do
     data=$(cat $stat | grep ^RL | cut -f 2-)
     samp=$(basename $stat _nodup_autosomes.stats)
     while read -r line
         do
-        read=$(echo $line | awk '{print $1}')
+        seq=$(echo $line | awk '{print $1}')
         count=$(echo $line | awk '{print $2}')
-        awk -v var="$count" -v var2="$read" 'BEGIN{for(c=0;c<var;c++) print var2}' >> nodup_autosome_stat/${samp}_readlength.txt
+        awk -v var="$count" -v var2="$seq" 'BEGIN{for(c=0;c<var;c++) print var2}' >> nodup_autosome_stat/${samp}_readlength.txt
     done < <(printf "$data\n")
     avg=$(cat nodup_autosome_stat/${samp}_readlength.txt | awk '{sum += $1};END {print sum/NR}')
     depth=$(samtools depth -a nodup_autosomes/${samp}_nodup_autosomes.bam | awk '{sum+=$3}; END {print sum/NR}')
