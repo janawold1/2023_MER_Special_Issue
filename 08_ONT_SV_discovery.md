@@ -139,13 +139,13 @@ The low sequence depth of our samples makes is somewhat challenging to curate hi
 Finally, low-confidence / imprecise call were removed. Notably, could not filter for `IS_SPECIFIC` in Sniffles calls as no SVs remained for comparisons.
 ```
 cat ${snif}03_jasmine_refine.vcf | grep -v 'IMPRECISE;' > ${snif}04_filtered.vcf
-cat ${cute}03_jasmien_refine.vcf | grep -v 'IMPRECISE;' | grep -v 'IS_SPECIFIC=0' > ${cute}04_filtered.vcf
+cat ${cute}03_jasmine_refine.vcf | grep -v 'IMPRECISE;' | grep -v 'IS_SPECIFIC=0' > ${cute}04_filtered.vcf
 
 bcftools sort -O v -o ${snif}05_filtered_sorted.vcf ${snif}04_filtered.vcf
 bcftools sort -O v -o ${cute}05_filtered_sorted.vcf ${cute}04_filtered.vcf
 ```
 
-## Genotyping with Paragraph
+## Filtering for genotyping with BayesTyper and Paragraph
 Genotyping SVs was challenging due to formatting SV calls to be compatible with Paragraph. First, Transversions and unplaced scaffolds were excluded while the VCF was normalised.
 ```
 bcftools view -e 'SVTYPE="TRA"' -O v -o ${snif}06_filtered_noTRAV.vcf ${snif}05_filtered_sorted.vcf
@@ -154,76 +154,4 @@ bcftools view -e 'SVTYPE="TRA"' -O v -o ${cute}06_filtered_noTRAV.vcf ${cute}05_
 bcftools norm --check-ref s -D -f ${ref} -O v -o ${snif}07_paragraph_candidates.vcf ${snif}06_filtered_noTRAV.vcf
 bcftools norm --check-ref s -D -f ${ref} -O v -o ${cute}07_paragraph_candidates.vcf ${cute}06_filtered_noTRAV.vcf
 ```
-
-The VCF for paragraph genotyping was used to estimate the number of SVs that passed filtering thresholds.
-
-# Genotyping with Paragraph
-Paragraph recommends running population-scale genotyping in the single-sample mode by:
-    1) Creating a manifest for each single sample.
-    2) Run Paragraph for each manifest with the `-M` option for each sample to its depth.
-    3) Merge all genotypes.vcf.gz to create final VCF with `bcftools merge`.
-
-Sample manifests have four required columns outlined as per below:
-
-|      ID      |                Path             |  Depth   |  Read Length  |
-|:------------:|:-------------------------------:|:--------:|:-------------:|
-|   SAMPLE_1   |    /path/to/bam/SAMPLE_1.bam    |    20    |      125      |
-|     ...      |               ...               |    ...   |      ...      |
-|   SAMPLE_N   |    /path/to/bam/SAMPLE_N.bam    |    20    |      125      |
-
-To simplify genotyping, bam files were subsetted to autosomal chromosomes.
-```
-awk '{printf("%s\t0\t%s\n",$1,$2);}' ${ref}.fai | grep NC_ | grep -v NC_044301 | grep -v NC_044302 > /kakapo-data/reference/kakapo_autosomes.bed
-
-male=/kakapo-data/bwa/bwa_male/
-female=/kakapo-data/bwa/bwa_female/
-
-for bam in ${male}nodup_bam/batch*/*_nodup.bam
-    do
-    base=$(basename $bam .bam)
-    echo $base 
-    samtools view -@ 64 -L /kakapo-data/references/kakapo_autosomes.bed -o ${male}nodup_autosomes/${base}_autosomes.bam $bam
-    samtools index -@ 64 ${male}nodup_autosomes/${base}_autosomes.bam
-    samtools stats -@ 64 ${male}nodup_autosomes/${base}_autosomes.bam > ${male}nodup_autosome_stat/${base}_autosomes.stats
-done
-```
-And sample manifests were created as per:
-```
-for stat in nodup_autosome_stat/Adelaide_nodup_autosomes.stats
-    do
-    data=$(cat $stat | grep ^RL | cut -f 2-)
-    samp=$(basename $stat _nodup_autosomes.stats)
-    while read -r line
-        do
-        read=$(echo $line | awk '{print $1}')
-        count=$(echo $line | awk '{print $2}')
-        awk -v var="$count" -v var2="$read" 'BEGIN{for(c=0;c<var;c++) print var2}' >> nodup_autosome_stat/${samp}_readlength.txt
-    done < <(printf "$data\n")
-    avg=$(cat nodup_autosome_stat/${samp}_readlength.txt | awk '{sum += $1};END {print sum/NR}')
-    depth=$(samtools depth -a nodup_autosomes/${samp}_nodup_autosomes.bam | awk '{sum+=$3}; END {print sum/NR}')
-    printf "$samp\t/kakapo-data/bwa/bwa_female/nodup_autosomes/${samp}_nodup_autosomes.bam\t$depth\t$avg\n" > /kakapo-data/paragraph/manifests/${samp}.tsv
-done
-```
-## SV summaries
-
-```
-printf "chrom\tpos\tsvlen\tsvtype\tdata\n" > ${cute}cuteSV_summary.tsv
-printf "chrom\tpos\tsvlen\tsvtype\tdata\n" > ${snif}sniffles_summary.tsv
-
-bcftools query -f '%CHROM\t%POS\t%SVLEN\t%SVTYPE\tcuteSV_unfiltered\n' ${cute}01_cuteSV_rawSVs.vcf >> ${cute}cuteSV_summary.tsv
-bcftools query -f '%CHROM\t%POS\t%SVLEN\t%SVTYPE\tcuteSV_SVfiltered\n' ${cute}07_paragraph_candidates.vcf >> ${cute}cuteSV_summary.tsv
-#bcftools query -f '%CHROM\t%POS\t%SVLEN\t%SVTYPE\tcuteSV_genofiltered\n' ${cute}01_cuteSV_rawSVs.vcf >> ${cute}cuteSV_summary.tsv
-
-bcftools query -f '%CHROM\t%POS\t%SVLEN\t%SVTYPE\tcuteSV_unfiltered\n' ${snif}01_sniffles_rawSVs.vcf >> ${snif}sniffles_summary.tsv
-bcftools query -f '%CHROM\t%POS\t%SVLEN\t%SVTYPE\tcuteSV_SVfiltered\n' ${snif}07_paragraph_candidates.vcf >> ${snif}sniffles_summary.tsv
-#bcftools query -f '%CHROM\t%POS\t%SVLEN\t%SVTYPE\tcuteSV_genofiltered\n' ${cute}01_cuteSV_rawSVs.vcf >> ${snif}sniffles_summary.tsv
-
-while read -r line
-    do
-    scaf=$(echo ${line} | awk '{print $1}')
-    chro=$(echo ${line} | awk '{print $2}')
-    echo Converting $scaf to $chro
-    sed -i "s/$scaf/$chro/g" sniffles_summary.tsv
-    sed -i "s/$scaf/$chro/g" cuteSV_summary.tsv
-done < convert_chr.txt
-```
+This VCF was used to estimate the number of SVs that passed filtering thresholds. However, not all of these SVs are compatible with the genotyping tools used here. More details are provided in the relevant Markdown files.

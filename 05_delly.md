@@ -151,9 +151,9 @@ while read -r line
     indiv=$(echo $line | awk '{print $1}')
     gen=$(echo $line | awk '{print $2}')
     echo "Counting SVs for $indiv..."
-    bcftools view -s ${indiv} ${out}10_delly_genofilter_trio.vcf | bcftools query -i 'GT== "alt"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVTYPE\n' >> ${out}delly_indiv_counts.tsv
+    bcftools view -s ${indiv} ${out}10_delly_genofilter_trio.vcf | bcftools query -i 'GT=="alt"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVTYPE\n' >> ${out}delly_indiv_counts.tsv
     echo "Assigning $gen generation to $indiv"
-    grep "^$indiv" ${out}delly_indiv_counts.tsv | awk -v var="$gen" '{print $0"\t"var}' >> ${out}delly_generations.tsv
+    grep "^$indiv" ${out}delly_indiv_counts.tsv | awk -v var="$gen" '{print $0"\t"var"\tDelly"}' >> ${out}delly_generations.tsv
 done < /kakapo-data/metadata/generations.tsv
 ```
 ## Preparing data for R markdown
