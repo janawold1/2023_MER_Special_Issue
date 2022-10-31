@@ -77,12 +77,12 @@ To find the type and location of the 'missing' SVs, we used `bcftools isec`.
 ```
 bcftools isec \
     ${cute}02_bayestyper_candidates_norm.vcf.gz \
-    ${cute}combined_cuteSV_variants.vcf.gz \
+    ${cute}missing_sites/combined_cuteSV_variants.vcf.gz \
     -p ${cute}missing_sites/
 
 bcftools isec \
     ${sniff}02_bayestyper_candidates_norm.vcf.gz \
-    ${sniff}combined_sniffles_variants.vcf.gz \
+    ${sniff}missing_sites/combined_sniffles_variants.vcf.gz \
     -p ${sniff}missing_sites/
 ```
 It is notable that although 179 variants in the `03_combined_variants.vcf.gz` file for CuteSV and 199 of Sniffles varints appeared to be excluded following `bayesTyperTools combine`. However, more SVs failed to intersect with the normalised candidate file `02_bayestyper_candidates_norm.vcf.gz` for both SV discovery tools. A summary of these SVs is below.
