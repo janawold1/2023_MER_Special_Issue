@@ -95,7 +95,7 @@ It is notable that although 179 variants in the `03_combined_variants.vcf.gz` fi
 |  Inversion  |   12   |    95    |
 |    Total    |  242   |   422    |
 
-Closely examining the number of SVs unique to `03_combined_variants.vcf.gz` confirmed that 63 CuteSV calls and 223 Sniffles calls had their location shifted (either ending or starting) during `bayesTyperTools combine`.
+Closely examining the number of SVs unique to `03_combined_variants.vcf.gz` confirmed that 63 CuteSV calls and 223 Sniffles calls had their ending location shifted during `bayesTyperTools combine`.
 
 These were found and and summarised as per below.
 ```
