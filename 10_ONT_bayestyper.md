@@ -65,10 +65,10 @@ bayesTyperTools combine \
 However, not all SVs were included once this `bayesTyperTools combine` step was complete. To find which SVs were dropped from the `03_combined_variants` we first extracted the sites associated with either CuteSV or Sniffles.
 ```
 bcftools view --threads 24 -i 'ACO="CuteSV"' \
-    -O z -o ${cute}combined_cuteSV_variants.vcf.gz \
+    -O z -o ${cute}missing_sites/combined_cuteSV_variants.vcf.gz \
     ${cute}03_combined_variants.vcf.gz
 bcftools view --threads 24 -i 'ACO="SNIFFLES"' \
-    -O z -o ${sniff}combined_sniffles_variants.vcf.gz \
+    -O z -o ${sniff}missing_sites/combined_sniffles_variants.vcf.gz \
     ${sniff}03_combined_variants.vcf.gz
 ```
 This indicated that 2,059 out of 2,238 CuteSV calls were included in the `03_combined_variants.vcf.gz` file and 5,030 out of 5,229 Sniffles calls were included for genotyping.
@@ -78,12 +78,12 @@ To find the type and location of the 'missing' SVs, we used `bcftools isec`.
 bcftools isec \
     ${cute}02_bayestyper_candidates_norm.vcf.gz \
     ${cute}combined_cuteSV_variants.vcf.gz \
-    -p ${cute}
+    -p ${cute}missing_sites/
 
 bcftools isec \
     ${sniff}02_bayestyper_candidates_norm.vcf.gz \
     ${sniff}combined_sniffles_variants.vcf.gz \
-    -p ${sniff}
+    -p ${sniff}missing_sites/
 ```
 It is notable that although 179 variants in the `03_combined_variants.vcf.gz` file for CuteSV and 199 of Sniffles varints appeared to be excluded following `bayesTyperTools combine`. However, more SVs failed to intersect with the normalised candidate file `02_bayestyper_candidates_norm.vcf.gz` for both SV discovery tools. A summary of these SVs is below.
 
@@ -99,13 +99,15 @@ Closely examining the number of SVs unique to `03_combined_variants.vcf.gz` conf
 
 These were found and and summarised as per below.
 ```
-bcftools query -f '%CHROM\t%POS\n' ${cute}0001.vcf > ${cute}missing.txt
-bcftools query -f '%CHROM\t%POS\n' ${sniff}0001.vcf > ${sniff}missing.txt
+bcftools query -f '%CHROM\t%POS\n' \
+    ${cute}missing_sites/0001.vcf > ${cute}missing_sites/missing.txt
+bcftools query -f '%CHROM\t%POS\n' \
+    ${sniff}missing_sites/0001.vcf > ${sniff}missing_sites/missing.txt
 
-bcftools query -R ${cute}missing.txt \
+bcftools query -R ${cute}missing_sites/missing.txt \
     -f '%SVTYPE\n' \
     ${cute}02_bayestyper_candidates_norm.vcf.gz | sort | uniq -c
-bcftools query -R ${cute}missing.txt \
+bcftools query -R ${cute}missing_sites/missing.txt \
     -f '%SVTYPE\n' \
     ${cute}02_bayestyper_candidates_norm.vcf.gz | sort | uniq -c
 ```
@@ -202,7 +204,8 @@ This raw genotype file contains genotypes for both the SVs called by either Cute
 We are now ready to annotate the VCF with SV types.
 
 ## Finding SV type
-As mentioned above, BayesTyper removes symbolic alleles from the genotype files. To make comparisons among SV tools similar, the SV type called by either CuteSV or Sniffles were resoved as per below.
+As mentioned above, BayesTyper removes symbolic alleles from the genotype files and we identified a number of SVs that had their locations shifted after running `bayesTyperTools combine`. To make comparisons among SV tools similar, the SV type called by either CuteSV or Sniffles were resoved as per below.
+
 1) First identify the locations of genotyped variants:
 ```
 bcftools query -f '%CHROM\t%POS\n' ${out}bayestyper/batch_filtered/08_batch_filtered_trios.vcf > ${out}bayestyper/batch_genos
