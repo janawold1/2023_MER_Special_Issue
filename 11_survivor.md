@@ -2,7 +2,7 @@
 Survivor was used to identify SVs that overlapped in the data filtered for SV call quality among all six SV discovery tools/strategies. Survivor uses a config file that provides the path to VCFs for comparison.
 ```
 #!/bin/bash -e
-data=/kakapo-data/bwa/survivor/
+data=/kakapo-data/survivor/
 
 for file in ${data}input/*.txt
     do
@@ -26,11 +26,11 @@ for vcf in ${data}outputs/*_distance.vcf
     dup=$(bcftools query -i 'SVTYPE=="DUP"' -f '%SVTYPE\n' ${vcf} | wc -l)
     ins=$(bcftools query -i 'SVTYPE=="INS"' -f '%SVTYPE\n' ${vcf} | wc -l)
     inv=$(bcftools query -i 'SVTYPE=="INV"' -f '%SVTYPE\n' ${vcf} | wc -l)
-    echo "${base},${total},$del,$dup,$ins,$inv" >> ${data}overlap_counts_min50bp.csv
+    printf "${base}\t${total}\t${del}\t${dup}\t${ins}\t${inv}\n" >> ${data}overlap_counts.csv
 done
 ```
 
-# To not cosidering SV type in overlap comparisons.
+# Not cosidering SV type in overlap comparisons.
 ```
 for file in ${data}input/*.txt
     do
