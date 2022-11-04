@@ -91,8 +91,6 @@ bcftools sort -T ${bayes}mantaJ/ -O v -o ${bayes}mantaJ/04_joint_converted.sorte
     ${bayes}mantaJ/03_joint_converted.vcf
 bayesTyperTools combine -v ${deepV},MANTA:${bayes}mantaJ/04_joint_converted.sorted.vcf \
     -o ${bayes}mantaJ/05_joint_combined -z
-
-
 ```
 
 ## Running KMC and makeBloom
