@@ -71,19 +71,28 @@ cat chr_list.txt | xargs tabix -h ${out}Trained_SV_scaffolds_renamed_norm.vcf.gz
 Allele conversion and file combination was then conducted as per:
 
 ```
-for manta in ${out}{batch,joint}_filtered/
-    do
-    file=$(basename ${manta})
-    echo "Normalising 01_$file.SVs.vcf"
-    bcftools norm --threads 24 -f ${chr_ref} -m -any \
-        -O v -o ${manta}02_${file}_bayestyper_candidates_norm.vcf ${manta}01_$file.SVs.vcf
-    echo "Running convertAllele for 02_${file}_norm.vcf..."
-    bayesTyperTools convertAllele --variant-file ${manta}02_bayestyper_candidates_norm.vcf --genome-file ${chr_ref} \
-        --output-prefix ${manta}03_${file}_converted
-    echo "Finally combining DeepVariant and Manta alleles into 04_${file}_mantaDV_candidates.vcf.gz"
-    bayesTyperTools combine -v ${deepV},MANTA:${manta}03_${file}_converted.vcf.gz \
-        -o ${manta}04_${file}_combined_variants -z
-done
+bcftools norm --threads 24 -f ${chr_ref} -m -any \
+    -O v -o ${bayes}mantaB/02_batch_candidates_norm.vcf ${bayes}mantaB/01_batch_filtered.SVs.vcf
+bayesTyperTools convertAllele \
+    --variant-file ${bayes}mantaB/02_bayestyper_candidates_norm.vcf \
+    --genome-file ${chr_ref} \
+    --output-prefix ${bayes}03_batch_converted
+bayesTyperTools combine -v ${deepV},MANTA:${bayes}mantaB/03_batch_converted.vcf \
+    -o ${bayes}mantaB/04_batch_combined
+
+
+bcftools norm --threads 24 -f ${chr_ref} -m -any \
+    -O v -o ${bayes}mantaJ/02_joint_candidates_norm.vcf ${bayes}mantaJ/01_joint_filtered.SVs.vcf
+bayesTyperTools convertAllele \
+    --variant-file ${bayes}mantaJ/02_bayestyper_candidates_norm.vcf \
+    --genome-file ${chr_ref} \
+    --output-prefix ${bayes}mantaJ/03_joint_converted
+bcftools sort -T ${bayes}mantaJ/ -O v -o ${bayes}mantaJ/04_joint_converted.sorted.vcf \
+    ${bayes}mantaJ/03_joint_converted.vcf
+bayesTyperTools combine -v ${deepV},MANTA:${bayes}mantaJ/04_joint_converted.sorted.vcf \
+    -o ${bayes}mantaJ/05_joint_combined -z
+
+
 ```
 
 ## Running KMC and makeBloom
