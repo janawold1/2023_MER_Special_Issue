@@ -133,19 +133,27 @@ done
 ## Merging SV genotype batches
 To merge genotyping batches, the outputs from Bayestyper were first bgzipped and indexed with tabix.
 ```
+bcftools_viewCommand=view --threads 64 -i ACO="SNIFFLES" -O z -o genotypes/sample_batch1_sniffles_genotypes.vcf.gz genotypes/sample_batch1_genotypes.vcf
+
 for vcf in ${cute}genotypes/sample_batch{1..6}/*_genotypes.vcf
     do
     batch=$(basename $vcf _genotypes.vcf)
-    bgzip ${vcf}
-    echo "Now indexing $vcf"
-    tabix ${cute}genotypes/${batch}/${batch}_genotypes.vcf.gz
+    echo "Extracting cuteSVs SV calls for $batch..."
+    bcftools view --threads 64 -i 'ACO="CuteSV"' \
+        -O z -o ${cute}genotypes/${batch}_cuteSV_genotypes.vcf.gz \
+        $vcf
+    echo "Now indexing $batch..."
+    tabix ${cute}genotypes/${batch}_genotypes.vcf.gz
 done &
 for vcf in ${sniff}genotypes/sample_batch{1..6}/*_genotypes.vcf
     do
     batch=$(basename $vcf _genotypes.vcf)
-    bgzip ${vcf}
-    echo "Now indexing $vcf"
-    tabix ${sniff}genotypes/${batch}/${batch}_genotypes.vcf.gz
+   echo "Extracting Sniffles SV calls for $batch..."
+    bcftools view --threads 64 -i 'ACO="SNIFFLES"' \
+        -O z -o ${sniff}genotypes/${batch}_sniffles_genotypes.vcf.gz \
+        $vcf
+    echo "Now indexing $batch..."
+    tabix ${sniff}genotypes/${batch}_genotypes.vcf.gz
 done
 wait
 ```
