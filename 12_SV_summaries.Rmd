@@ -1,12 +1,10 @@
 ---
-title: 'Chapter 4: Short-read SV discovery in Kākāpō'
+title: 'Characteristics of Structural Variants discovered using different tools in the critically endangered Kākāpō'
 author: "Jana R. Wold"
-date: "31 January 2022"
-output:
-  html_document:
-    self_contained: false
+date: "15 November 2022"
+output: "pdf"
 ---
-
+ssh 
 Here is the outline of charting differences among structural variants (SVs) identified using 3 discovery tools: 1) Delly; 2) Manta; and 3) Smoove.  
 
 Below we assess variation in the number of SVs discovered by type, size and chromosome for each of these three tools. We also assess the impacts of filtering parameters. 

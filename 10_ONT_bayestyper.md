@@ -131,9 +131,8 @@ for samps in ${out}sample_batches/sample_batch*.tsv
 done
 ```
 ## Merging SV genotype batches
-To merge genotyping batches, the outputs from Bayestyper were first bgzipped and indexed with tabix.
+To speed up the merging of genotype batches, the SV genotypes from Bayestyper were first extracted from the raw file and indexed with tabix.
 ```
-bcftools_viewCommand=view --threads 64 -i ACO="SNIFFLES" -O z -o genotypes/sample_batch1_sniffles_genotypes.vcf.gz genotypes/sample_batch1_genotypes.vcf
 
 for vcf in ${cute}genotypes/sample_batch{1..6}/*_genotypes.vcf
     do
@@ -157,23 +156,23 @@ for vcf in ${sniff}genotypes/sample_batch{1..6}/*_genotypes.vcf
 done
 wait
 ```
-Then merged according to sample ID with bcftools.
+Then sample batches were merged according to sample ID with bcftools.
 ```
-bcftools merge -m id -O z -o ${cute}genotypes/04_raw_cuteSV_DeepV_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch1/sample_batch1_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch2/sample_batch2_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch3/sample_batch3_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch4/sample_batch4_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch5/sample_batch5_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch6/sample_batch6_genotypes.vcf.gz
+bcftools merge -m id -O z -o ${cute}04_raw_cuteSV_genotypes.vcf.gz \
+    ${cute}genotypes/sample_batch1_cuteSV_genotypes.vcf.gz \
+    ${cute}genotypes/sample_batch2_cuteSV_genotypes.vcf.gz \
+    ${cute}genotypes/sample_batch3_cuteSV_genotypes.vcf.gz \
+    ${cute}genotypes/sample_batch4_cuteSV_genotypes.vcf.gz \
+    ${cute}genotypes/sample_batch5_cuteSV_genotypes.vcf.gz \
+    ${cute}genotypes/sample_batch6_cuteSV_genotypes.vcf.gz
 
-bcftools merge -m id -O z -o ${sniff}genotypes/04_raw_sniffles_DeepV_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch1/sample_batch1_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch2/sample_batch2_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch3/sample_batch3_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch4/sample_batch4_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch5/sample_batch5_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch6/sample_batch6_genotypes.vcf.gz
+bcftools merge -m id -O z -o ${sniff}/04_raw_sniffles_DeepV_genotypes.vcf.gz \
+    ${sniff}genotypes/sample_batch1_sniffles_genotypes.vcf.gz \
+    ${sniff}genotypes/sample_batch2_sniffles_genotypes.vcf.gz \
+    ${sniff}genotypes/sample_batch3_sniffles_genotypes.vcf.gz \
+    ${sniff}genotypes/sample_batch4_sniffles_genotypes.vcf.gz \
+    ${sniff}genotypes/sample_batch5_sniffles_genotypes.vcf.gz \
+    ${sniff}genotypes/sample_batch6_sniffles_genotypes.vcf.gz
 ```
 This raw genotype file contains genotypes for both the SVs called by either CuteSV or Sniffles and DeepVariant SNPs. However, the SV class is not included in this output. To interpret the genotype results from BayesTyper, we have to first extract the SVs from this file for annotation. SVs were simultaneously filtered for missingness and to ensure variant sites were included.
 ```

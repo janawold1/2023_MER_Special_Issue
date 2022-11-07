@@ -77,8 +77,8 @@ bayesTyperTools convertAllele \
     --variant-file ${bayes}mantaB/02_bayestyper_candidates_norm.vcf \
     --genome-file ${chr_ref} \
     --output-prefix ${bayes}03_batch_converted
-bayesTyperTools combine -v ${deepV},MANTA:${bayes}mantaB/03_batch_converted.vcf \
-    -o ${bayes}mantaB/04_batch_combined
+bayesTyperTools combine -v ${deepV},MANTAB:${bayes}mantaB/03_batch_converted.vcf \
+    -o ${bayes}mantaB/04_batch_combined -z
 
 
 bcftools norm --threads 24 -f ${chr_ref} -m -any \
@@ -212,7 +212,7 @@ bcftools merge -m id -O z -o batch_filtered/06_manta_genotypes.vcf.gz \
     ${out}bayestyper/batch_filtered/sample_batch5/sample_batch5_genotypes.vcf.gz \
     ${out}bayestyper/batch_filtered/sample_batch6/sample_batch6_genotypes.vcf.gz
 
- bcftools view --threads 24 -i '(ACO="MANTA") & ((N_PASS(GT=="mis") < 17) & (N_PASS(GT="alt")>=1))' \
+ bcftools view --threads 24 -i '(ACO="MANTA") & ((N_PASS(GT=="mis") < 17) & (N_PASS(GT="alt")>=1) & N_PASS(SAF=0) >= 17)' \
     -O v -o ${out}bayestyper/batch_filtered/07_batch_filtered_genotypes.vcf \
     ${out}bayestyper/batch_filtered/06_batch_genotypes.vcf.gz
 
