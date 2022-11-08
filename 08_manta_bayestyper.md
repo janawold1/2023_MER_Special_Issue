@@ -164,37 +164,27 @@ for samps in ${out}sample_batches/sample_batch*.tsv
             --variant-clusters-file ${svs}clusters/${base}_unit_1/variant_clusters.bin \
             --cluster-data-dir ${svs}clusters/${base}_cluster_data/ \
             --samples-file ${samps} --genome-file ${chr_ref} \
-            --output-prefix ${svs}genotypes/${base}_genotypes --threads 24
+            --output-prefix ${svs}genotypes/${base}_genotypes --threads 24 -z
     done
 done
 ```
 
 ## Merging SV genotype batches
-
+To expedite the process of merging genotype batches, sites called in either the batch or joint Manta call sets were extracted, compressed with bgzip and indexed with tabix.
 ```
-for vcf in ${out}bayestyper/joint_filtered/sample_batch{1..6}/*_genotypes.vcf.gz
+for vcf in ${out}bayestyper/joint_filtered/sample_batch{1..6}/*_genotypes.vcf
     do
     batch=$(basename $vcf _genotypes.vcf.gz)
-    echo "Converting $vcf to bgzip compression..."
-    gunzip $vcf
+    echo "Compressing $vcf with bgzip..."
     bgzip ${out}bayestyper/joint_filtered/${batch}/${batch}_genotypes.vcf
-    echo "Now indexing $vcf"
+    echo "Now indexing $vcf.gz"
     tabix ${out}bayestyper/joint_filtered/${batch}/${batch}_genotypes.vcf.gz
 done
 
-bcftools merge -m id -O z -o joint_filtered/06_manta_genotypes.vcf.gz \
-    joint_filtered/sample_batch1/sample_batch1_genotypes.vcf.gz \
-    joint_filtered/sample_batch2/sample_batch2_genotypes.vcf.gz \
-    joint_filtered/sample_batch3/sample_batch3_genotypes.vcf.gz \
-    joint_filtered/sample_batch4/sample_batch4_genotypes.vcf.gz \
-    joint_filtered/sample_batch5/sample_batch5_genotypes.vcf.gz \
-    joint_filtered/sample_batch6/sample_batch6_genotypes.vcf.gz
+bcftools merge -m id -O z -o ${joint}06_mantaJ_genotypes.vcf.gz \
+    ${joint}sample_batch{1..6}_mantaJ_genotypes.vcf.gz
 
- bcftools view --threads 24 -i '(ACO="MANTA") & ((N_PASS(GT=="mis") < 17) & (N_PASS(GT="alt")>=1))' \
-    -O v -o joint_filtered/07_joint_filtered_genotypes.vcf \
-    joint_filtered/06_joint_genotypes.vcf.gz
-
-for vcf in ${out}bayestyper/batch_filtered/sample_batch{1..6}/*_genotypes.vcf.gz
+for vcf in ${batch}*_genotypes.vcf.gz
     do
     batch=$(basename $vcf _genotypes.vcf.gz)
     echo "Converting $vcf to bgzip compression..."
@@ -204,46 +194,97 @@ for vcf in ${out}bayestyper/batch_filtered/sample_batch{1..6}/*_genotypes.vcf.gz
     tabix ${out}bayestyper/batch_filtered/${batch}/${batch}_genotypes.vcf.gz
 done
 
-bcftools merge -m id -O z -o batch_filtered/06_manta_genotypes.vcf.gz \
-    ${out}bayestyper/batch_filtered/sample_batch1/sample_batch1_genotypes.vcf.gz \
-    ${out}bayestyper/batch_filtered/sample_batch2/sample_batch2_genotypes.vcf.gz \
-    ${out}bayestyper/batch_filtered/sample_batch3/sample_batch3_genotypes.vcf.gz \
-    ${out}bayestyper/batch_filtered/sample_batch4/sample_batch4_genotypes.vcf.gz \
-    ${out}bayestyper/batch_filtered/sample_batch5/sample_batch5_genotypes.vcf.gz \
-    ${out}bayestyper/batch_filtered/sample_batch6/sample_batch6_genotypes.vcf.gz
-
- bcftools view --threads 24 -i '(ACO="MANTA") & ((N_PASS(GT=="mis") < 17) & (N_PASS(GT="alt")>=1) & N_PASS(SAF=0) >= 17)' \
-    -O v -o ${out}bayestyper/batch_filtered/07_batch_filtered_genotypes.vcf \
-    ${out}bayestyper/batch_filtered/06_batch_genotypes.vcf.gz
-
+bcftools merge -m id -O z -o ${batch}06_manta_genotypes.vcf.gz \
+    ${batch}genotypes/sample_batch{1..6}_genotypes.vcf.gz
 ```
 
 ## Finding SV type
 
-BayesTyper removes symbolic alleles from the genotype files. To make comparisons among SV tools similar, the SV type called by Manta was resoved as per below.
-1) First identify the locations of genotyped variants:
+BayesTyper removes symbolic alleles from the genotype files. To make comparisons among SV tools similar, we attempted to relate SV types called by Manta.
+
+As recommended [here](https://github.com/bioinformatics-centre/BayesTyper/issues/41), we tried to use the convertSeqToAlleleId script included in the source installation of BayesTyper (not available through Bioconda install).  
+
+The format of this command is:  
+<convertSeqToAlleleID> <input_VCF> <output_prefix> <minimum_SV_length>
+
+Because SVs were already quality filtered prior to their inclusion in BayesTyper genotyping and to capture as many SVs in the output, we chose not to implement a minimum size threshold.  
 ```
-bcftools query -f '%CHROM\t%POS\n' ${out}bayestyper/batch_filtered/08_batch_filtered_trios.vcf > ${out}bayestyper/batch_genos
-bcftools query -f '%CHROM\t%POS\n' ${out}bayestyper/joint_filtered/08_joint_filtered_trios.vcf > ${out}bayestyper/joint_genos
+convertSeqToAlleleID 04_raw_cuteSV_genotypes.vcf.gz 05_cuteSV_converted 0
+convertSeqToAlleleID 04_raw_sniffles_genotypes.vcf.gz 05_sniffles_converted 0
+```
+The breakdown of SV types output by `convertSeqToAlleleID` command are as per:
+|   SV Type   | Manta - Batch | Manta - Joint |
+|:-----------:|:-------------:|:-------------:|
+|  Deletion   |      969      |      900      |
+| Duplication |      289      |      268      |
+|  Insertion  |       0       |       0       |
+|  Inversion  |     32,281    |     30,181    |
+|    Total    |     33,539    |     31,349    |
+
+Comparing with the output of SVs in the normalised file for genotyping, we see that the counts of SV types were not consistent with the expectations from the normalised file before running `bayesTyperTools combine`.  
+
+|   SV Type   | Manta - Batch | Manta - Joint |
+|:-----------:|:-------------:|:-------------:|
+|  Deletion   |     1,981     |     1,419     |
+| Duplication |      882      |      503      |
+|  Insertion  |      752      |      221      |
+|  Inversion  |     34,173    |     31,338    |
+|    Total    |     37,791    |     33,481    |
+
+However, the total number of SVs in the Genotype file prior to conversion with `convertSeqToAlleleID` for each call set was 34,134 and 31,747 for the batch and joint call sets repectively. While the conversion doesn't work for insertions, even adding these doesn't match with the expected total outputs. Taking the Batched call set as an example:  
+
+33,539 total SVs converted + 752 expected insertions = 34,291 Total SVs  
+
+This is 157 more SVs than expected (34,291 Total converted SVs - 34,134 Total not converted SVs)
+
+This leaves uncertainty around whether the conversion by `convertSeqToAlleleID` converted SVs to different types than was called by Manta (e.g., Insertions coverted to duplications). To explore this further, attempted to reconcile genotype variants with their original SV class called by Manta.  
+
+    1. Identifying the locations of genotyped variants
+Here we used `bcftools` to extract the chromosome, start and end positions of genotyped variants.  
+
+```
+bcftools query \
+    -f '%CHROM\t%POS\t%END\n' \
+    ${batch}08_batch_filtered_trios.vcf > ${batch}batch_genos
+bcftools query \
+    -f '%CHROM\t%POS\t%END\n' \
+    ${joint}08_joint_filtered_trios.vcf > ${joint}joint_genos
+```
+We also ensured that extracted regions were unique, and did not represent multiple SVs in the same region.
+
+```
+cat ${batch}batch_genos | sort | uniq | wc -l # Total unique records
+cat ${batch}batch_genos | wc -l # Total records
+
+cat ${joint}joint_genos | sort | uniq | wc -l # Total unique records
+cat ${joint}joint_genos | wc -l # Total records
+```
+In both instances, the number of regions remained consistent. 
+
+    2. Extracting overlaping SVs.  
+
+Here we attempted to extract SVs from the normalised manta call sets prior to removal of symbolic alleles with `bayesTyperTools convert`.  
+
+```
+bcftools query \
+    -T ${batch}batch_genos \
+    -f '%CHROM\t%POS\t%END\t%SVTYPE\n' \
+    ${batch}batch_filtered/02_batch_filtered_norm.vcf.gz | sort | uniq -c
+
+bcftools query \
+    -T ${joint}joint_genos \
+    -f '%CHROM\t%POS\t%END\t%SVTYPE\n' \
+    ${joint}joint_filtered/02_joint_filtered_norm.vcf.gz | sort | uniq -c
 ```
 
-2) Count overlaping SVtypes:
-```
-bcftools query -T ${out}bayestyper/batch_genos -f '%SVTYPE\n' \
-    ${out}bayestyper/batch_filtered/02_batch_filtered_norm.vcf.gz | sort | uniq -c
+Found that 76 SVs don't overlap in the batch data and 126 SVs don't overlap in the joint data.  
 
-bcftools query -T ${out}bayestyper/joint_genos -f '%SVTYPE\n' \
-    ${out}bayestyper/joint_filtered/02_joint_filtered_norm.vcf.gz | sort | uniq -c
-```
-
-Found that 76 SVs don't overlap in the batch data and 126 SVs don't overlap in the joint data. 
-
-3) Find non-overlapping sites (i.e., those present in genotyped output, but absent in call set):
+    3. Find non-overlapping sites (i.e., those present in genotyped output, but absent in call set).  
 ```
 
 ```
 
-4) Annotate VCF for individual counts:
+    4. Annotate VCF with SV type.  
 First prepare the annotation file by identifying the resolvable SVs and their types:
 ```
 bcftools query -f '%CHROM\t%POS\n' batch_filtered/07_batch_filtered_genotypes.vcf > batch_geno_sites
@@ -278,6 +319,22 @@ bcftools annotate -a joint_conversion.gz -h annots.hdr \
     -c CHROM,POS,SVTYPE,SVLEN -O v -o 09_joint_annotated.vcf \
     ${out}bayestyper/joint_filtered/07_joint_filtered_genotypes.vcf
 ```
+
+## Genotype quality filtering
+
+SVs were simultaneously filtered for missingness and to ensure variant sites were included. As with the Manta SV call sets, for all sites where at least one individual carried an alternate allele (`N_PASS(GT=="alt") >= 1`), we allowed an individual missingness of 20% (`N_PASS(GT=="mis") < 35`) and required that at least 80% of all samples passed all four of BayesTyper's 'hard' filtering thresholds (`N_PASS(SAF!=0) < 35`).
+```
+ bcftools view --threads 24 \
+    -i '((N_PASS(GT=="mis") < 35) & (N_PASS(GT=="alt") >= 1) & (N_PASS(SAF!=0) < 35))' \
+    -O z -o ${cute}05_cuteSV_SV_genotypes.vcf.gz \
+    ${cute}04_raw_cuteSV_DeepV_genotypes.vcf.gz
+
+ bcftools view --threads 24 \
+    -i '((N_PASS(GT=="mis") < 35) & (N_PASS(GT=="alt") >=1 ) & (N_PASS(SAF!=0) < 35))' \
+    -O z -o ${sniff}05_sniffles_SV_genotypes.vcf.gz \
+    ${sniff}04_raw_sniffles_DeepV_genotypes.vcf.gz
+```
+We are now ready to test Mendelian trios and prepare summary files.
 
 ## Mendelian Inheritance Tests
 Tests of Mendelian Inheritance were conducted as per: 
