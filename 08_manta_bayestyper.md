@@ -42,20 +42,24 @@ bcftools merge -m all -O z -o ${raw_data}batch_total.vcf.gz \
     ${raw_data}batch_calling/batches_male/batch09_manta_INV_conversion_male.vcf.gz
 ```
 ## SV filtering for genotyping candidates
+Here, we applied thresholds to filter for SV call quality. All SVs were required to pass Manta's internal 'hard' filters (`FILTER=="PASS"`), have at least one sample pass all filters for SV calling (`FORMAT/FT=="PASS"`), did not exceed the maximum allowed depth as estimated by Manta (`FILTER!="MaxDepth"`), fail to adhere to diploid expectations (`FILTER!="Ploidy"`), all SVs <1kb in length could not have the fraction of reads with a MAPQ score of 0 exceed 0.4(`FILTER!="MaxMQ0Frac"`), and those SVs significantly larger than the paired-read length with no paired support in any sample were excluded (`FILTER!="NoPairSupport"`). Finally, all SVs were set to have a minimum length of 50bp, and all breakends were excluded.  
 
 ```
-bcftools view -i '(FILTER=="PASS" & FMT/PR >= 10 & FORMAT/FT == "PASS" & SVLEN<=-50 & SVTYPE=="DEL") | (FILTER=="PASS" & PR >= 10 & FMT/FT == "PASS" & SVLEN>=50 & SVTYPE!="BND")' \
+    bcftools view \
+        -i '(FILTER=="PASS" & PR >= 10 & FORMAT/FT == "PASS" & FILTER!="MaxDepth" & FILTER!="Ploidy" & FILTER!="MaxMQ0Frac" & FILTER!="NoPairSupport" & SVLEN<=-50 & SVTYPE=="DEL") | (FILTER=="PASS" & PR >= 10 & FORMAT/FT == "PASS" & FILTER!="MaxDepth" & FILTER!="Ploidy" & FILTER!="MaxMQ0Frac" & FILTER!="NoPairSupport" & SVLEN>=50 & SVTYPE!="BND")' \
+        -T ^${exclude} \
+        -O z -o ${out}batch_filtered/01_batch_filtered.SVs.vcf.gz \
+        ${raw_data}batch_total.vcf.gz
+
+bcftools view \
+    -i '(FILTER=="PASS" & PR >= 10 & FORMAT/FT == "PASS" & FILTER!="MaxDepth" & FILTER!="Ploidy" & FILTER!="MaxMQ0Frac" & FILTER!="NoPairSupport" & SVLEN<=-50 & SVTYPE=="DEL") | (FILTER=="PASS" & PR >= 10 & FORMAT/FT == "PASS" & FILTER!="MaxDepth" & FILTER!="Ploidy" & FILTER!="MaxMQ0Frac" & FILTER!="NoPairSupport" & SVLEN>=50 & SVTYPE!="BND")' \
     -T ^${exclude} \
     -O z -o ${out}joint_filtered/01_joint_filtered.SVs.vcf.gz \
     ${raw_data}joint_total.vcf.gz
-
-bcftools view -i '(FILTER=="PASS" & FMT/PR >= 10 & FORMAT/FT == "PASS" & SVLEN<=-50 & SVTYPE=="DEL") | (FILTER=="PASS" & PR >= 10 & FMT/FT == "PASS" & SVLEN>=50 & SVTYPE!="BND")' \
-    -T ^${exclude} \
-    -O z -o ${out}batch_filtered/01_batch_filtered.SVs.vcf.gz \
-    ${raw_data}batch_total.vcf.gz
 ```
 
 ## Convert Manta VCF to remove symbolic alleles
+
 This converts all symbolic alleles to a full sequence. The conversion results in large VCFs, so ensure that the output is gzipped iwth the -z flag. Note, bayesTyper does NOT support bgzip files. BayesTyper benefits from including SNP data as it helps with initialising the kmers. Therefore it's recommended to conduct SNP discovery with either GATK HaplotypeCaller or FreeBayes. I used the kākāpō125+ DeepVariant SNP call set prepared by (Guhlin et al. 2022)[https://www.biorxiv.org/content/10.1101/2022.10.22.513130v1.abstract].
 
 For combining SV calls with the DeepVariant SNPs, all chromosome sizes were used to match kākāpō125+ and NCBI chromosome IDs. bcftools annotate was used to rename chromosomes to be consistent with NCBI scaffold names. SNPs were filtered down to only include regions of interest (i.e., scaffolds included for SV analysis). But after converting chromosome names, needed to sort VCF header and body of DeepVariant file to match the manta VCFs. Sorted the body with [this solution](https://www.biostars.org/p/84747/), then manually edited the header.
@@ -94,6 +98,7 @@ bayesTyperTools combine -v ${deepV},MANTA:${bayes}mantaJ/04_joint_converted.sort
 ```
 
 ## Running KMC and makeBloom
+
 It is really easy to over-resource KMC, that is to say if you provide it with too much memory/threads the program freezes. I have had the best luck with 24Gb RAM and 48 threads as per below. It also found that I needed to run KMC one individual at a time. I think threads clashed when I attempted to run multiple individuals at once since KMC uses the same temp file naming convention each time it runs.
 
 To aid in genotyping, KMC was run using BAMs filtered for autosomal scaffolds only using the solution provided (here)[https://www.biostars.org/p/302771/].
@@ -202,7 +207,7 @@ bcftools merge -m id -O z -o ${batch}06_manta_genotypes.vcf.gz \
 
 BayesTyper removes symbolic alleles from the genotype files. To make comparisons among SV tools similar, we attempted to relate SV types called by Manta.
 
-As recommended [here](https://github.com/bioinformatics-centre/BayesTyper/issues/41), we tried to use the convertSeqToAlleleId script included in the source installation of BayesTyper (not available through Bioconda install).  
+As recommended (here)[https://github.com/bioinformatics-centre/BayesTyper/issues/41], we tried to use the convertSeqToAlleleId script included in the source installation of BayesTyper (not available through Bioconda install).  
 
 The format of this command is:  
 <convertSeqToAlleleID> <input_VCF> <output_prefix> <minimum_SV_length>
@@ -235,11 +240,12 @@ However, the total number of SVs in the Genotype file prior to conversion with `
 
 33,539 total SVs converted + 752 expected insertions = 34,291 Total SVs  
 
-This is 157 more SVs than expected (34,291 Total converted SVs - 34,134 Total not converted SVs)
+This is 157 more SVs than expected from counts of the number of SVs in the combined candidates file (34,291 Total converted SVs - 34,134 Total not converted SVs).  
 
-This leaves uncertainty around whether the conversion by `convertSeqToAlleleID` converted SVs to different types than was called by Manta (e.g., Insertions coverted to duplications). To explore this further, attempted to reconcile genotype variants with their original SV class called by Manta.  
+This leaves uncertainty around whether the conversion by `convertSeqToAlleleID` changed the type of SVs called by Manta (e.g., Insertions coverted to duplications). To explore this further, attempted to reconcile genotype variants with their original SV class called by Manta.  
 
-    1. Identifying the locations of genotyped variants
+### Identifying the locations of genotyped variants
+
 Here we used `bcftools` to extract the chromosome, start and end positions of genotyped variants.  
 
 ```
@@ -261,7 +267,7 @@ cat ${joint}joint_genos | wc -l # Total records
 ```
 In both instances, the number of regions remained consistent. 
 
-    2. Extracting overlaping SVs.  
+### Extracting overlaping SVs
 
 Here we attempted to extract SVs from the normalised manta call sets prior to removal of symbolic alleles with `bayesTyperTools convert`.  
 
@@ -279,12 +285,14 @@ bcftools query \
 
 Found that 76 SVs don't overlap in the batch data and 126 SVs don't overlap in the joint data.  
 
-    3. Find non-overlapping sites (i.e., those present in genotyped output, but absent in call set).  
+### Resolve SV type in non-overlapping sites
+
+We used `bcftools isec` to resolve the class of each SV present in genotyped output, but absent in the combined call set.  
 ```
 
 ```
 
-    4. Annotate VCF with SV type.  
+4) Annotate VCF for individual counts:
 First prepare the annotation file by identifying the resolvable SVs and their types:
 ```
 bcftools query -f '%CHROM\t%POS\n' batch_filtered/07_batch_filtered_genotypes.vcf > batch_geno_sites
@@ -294,7 +302,7 @@ bcftools query -f '%CHROM\t%POS\n' joint_filtered/07_joint_filtered_genotypes.vc
 bcftools query -T joint_geno_sites -f '%CHROM\t%POS\t%SVTYPE\t%SVLEN\n' joint_filtered/02_joint_filtered_norm.vcf.gz > joint_conversion
 ```
 
-Then edit the ```batch_conversion``` file so the first line in this file contains ```#CHROM POS SVTYPE  SVLEN``` with nano. 
+Then edit the ```batch_conversion``` file so the first line in this file contains ```#CHROM POS SVTYPE  SVLEN``` with nano.  
 
 And create a file that captures the information to be appended into the header of the VCF.
 
@@ -454,5 +462,4 @@ while read -r line
     bcftools view -s ${indiv} -R ${out}bayestyper/lineage_joint_comparisons/unfiltered/Rakiura_unfiltered_private_sites.txt ${out}raw_variants/joint_total.vcf.gz | bcftools query -i 'GT=="alt"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVTYPE\tRakiura_unfiltered_lineage\n' >> ${out}mantaJ_lineage_counts.tsv
     bcftools view -s ${indiv} -R ${out}bayestyper/lineage_joint_comparisons/unfiltered/Shared_unfiltered_sites.txt ${out}raw_variants/joint_total.vcf.gz | bcftools query -i 'GT=="alt"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVTYPE\tShared_unfiltered_lineage\n' >> ${out}mantaJ_lineage_counts.tsv
 done < /kakapo-data/metadata/generations.tsv
-
 ```
