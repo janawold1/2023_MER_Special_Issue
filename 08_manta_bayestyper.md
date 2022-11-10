@@ -60,7 +60,7 @@ bcftools view \
 
 ## Convert Manta VCF to remove symbolic alleles
 
-This converts all symbolic alleles to a full sequence. The conversion results in large VCFs, so ensure that the output is gzipped iwth the -z flag. Note, bayesTyper does NOT support bgzip files. BayesTyper benefits from including SNP data as it helps with initialising the kmers. Therefore it's recommended to conduct SNP discovery with either GATK HaplotypeCaller or FreeBayes. I used the kākāpō125+ DeepVariant SNP call set prepared by (Guhlin et al. 2022)[https://www.biorxiv.org/content/10.1101/2022.10.22.513130v1.abstract].
+This converts all symbolic alleles to a full sequence. The conversion results in large VCFs, so ensure that the output is gzipped iwth the -z flag. Note, bayesTyper does NOT support bgzip files. BayesTyper benefits from including SNP data as it helps with initialising the kmers. Therefore it's recommended to conduct SNP discovery with either GATK HaplotypeCaller or FreeBayes. I used the kākāpō125+ DeepVariant SNP call set prepared by [Guhlin et al. 2022](https://www.biorxiv.org/content/10.1101/2022.10.22.513130v1.abstract).
 
 For combining SV calls with the DeepVariant SNPs, all chromosome sizes were used to match kākāpō125+ and NCBI chromosome IDs. bcftools annotate was used to rename chromosomes to be consistent with NCBI scaffold names. SNPs were filtered down to only include regions of interest (i.e., scaffolds included for SV analysis). But after converting chromosome names, needed to sort VCF header and body of DeepVariant file to match the manta VCFs. Sorted the body with [this solution](https://www.biostars.org/p/84747/), then manually edited the header.
 
@@ -101,7 +101,7 @@ bayesTyperTools combine -v ${deepV},MANTA:${bayes}mantaJ/04_joint_converted.sort
 
 It is really easy to over-resource KMC, that is to say if you provide it with too much memory/threads the program freezes. I have had the best luck with 24Gb RAM and 48 threads as per below. It also found that I needed to run KMC one individual at a time. I think threads clashed when I attempted to run multiple individuals at once since KMC uses the same temp file naming convention each time it runs.
 
-To aid in genotyping, KMC was run using BAMs filtered for autosomal scaffolds only using the solution provided (here)[https://www.biostars.org/p/302771/].
+To aid in genotyping, KMC was run using BAMs filtered for autosomal scaffolds only using the solution provided [here](https://www.biostars.org/p/302771/)
 
 ```
 awk '{printf("%s\t0\t%s\n",$1,$2);}' ${ref}.fai | grep NC_ | grep -v NC_044301 | grep -v NC_044302 > /kakapo-data/reference/kakapo_autosomes.bed
@@ -162,7 +162,7 @@ for samps in ${out}sample_batches/sample_batch*.tsv
         do
         echo "Running cluster for $base for $svs..."
         bayesTyper cluster \
-            --variant-file ${svs}04_*_combined_variants.vcf.gz \
+            --variant-file ${svs}05_*_combined.vcf.gz \
             --samples-file ${samps} --genome-file ${chr_ref} \
             --output-prefix ${svs}clusters/${base} --threads 24
         bayesTyper genotype \
@@ -207,7 +207,7 @@ bcftools merge -m id -O z -o ${batch}06_manta_genotypes.vcf.gz \
 
 BayesTyper removes symbolic alleles from the genotype files. To make comparisons among SV tools similar, we attempted to relate SV types called by Manta.
 
-As recommended (here)[https://github.com/bioinformatics-centre/BayesTyper/issues/41], we tried to use the convertSeqToAlleleId script included in the source installation of BayesTyper (not available through Bioconda install).  
+As recommended [here](https://github.com/bioinformatics-centre/BayesTyper/issues/41), we tried to use the convertSeqToAlleleId script included in the source installation of BayesTyper (not available through Bioconda install).  
 
 The format of this command is:  
 <convertSeqToAlleleID> <input_VCF> <output_prefix> <minimum_SV_length>
@@ -246,7 +246,7 @@ This leaves uncertainty around whether the conversion by `convertSeqToAlleleID` 
 
 ### Identifying the locations of genotyped variants
 
-Here we used `bcftools` to extract the chromosome, start and end positions of genotyped variants.  
+Here we used `bcftools query` to extract the chromosome, start and end positions of genotyped variants.  
 
 ```
 bcftools query \

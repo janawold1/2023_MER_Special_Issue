@@ -63,20 +63,27 @@ wait
 bcftools merge -m id -O b -o ${out}01_bwa_delly_genotypes.bcf --threads 24 ${out}genotype/*geno.bcf # Used for unfiltered SV stats 
 tabix ${out}01_bwa_delly_genotypes.bcf
 
-delly filter -f germline -p -m 50 -o ${out}02_bwa_delly_germline_minimum50bp.bcf ${out}01_bwa_delly_genotypes.bcf 
-delly filter -f germline -p -m 300 -o ${out}03_bwa_delly_germline_minimum300bp.bcf ${out}01_bwa_delly_genotypes.bcf
+delly filter -f germline -p -m 50 -n 50000 -o ${out}02_delly_germline_min50bp.bcf ${out}01_bwa_delly_genotypes.bcf 
+delly filter -f germline -p -m 300 -n 50000 -o ${out}03_delly_germline_min300bp.bcf ${out}01_bwa_delly_genotypes.bcf
 
-bcftools view -t ^NC_044302.2 -i '(SVTYPE = "INS" & FILTER == "PASS")' \
+bcftools view -t ^NC_044302.2,NC_044301.2 -i '(SVTYPE = "INS" & FILTER == "PASS")' \
     -O b -o ${out}04_bwa_delly_ins.bcf ${out}01_bwa_delly_genotypes.bcf # Used for filtered INS stats
-bcftools view -t ^NC_044302.2 -i '(SVTYPE = "DEL")' \
+
+bcftools view -t ^NC_044302.2,NC_044301.2 -i '(SVTYPE = "DEL")' \
     -O b -o ${out}05_bwa_delly_del.bcf 02_bwa_delly_germline_minimum50bp.bcf
-bcftools view -t ^NC_044302.2 -i '(SVTYPE = "INV") | (SVTYPE = "DUP")' \
+
+bcftools view -t ^NC_044302.2,NC_044301.2 -i '(SVTYPE = "INV") | (SVTYPE = "DUP")' \
     -O b -o ${out}06_bwa_delly_inv_dup.bcf ${out}03_bwa_delly_germline_minimum300bp.bcf
 tabix ${out}04_bwa_delly_ins.bcf
 tabix ${out}05_bwa_delly_del.bcf
 tabix ${out}06_bwa_delly_inv_dup.bcf
 
-bcftools concat -a -O v -o 07_delly_SVfilter.vcf ${out}04_bwa_delly_ins.bcf ${out}05_bwa_delly_del.bcf ${out}06_bwa_delly_dup_inv.bcf
+bcftools concat \
+    -a -O v -o 07_delly_SVfilter.vcf \
+    ${out}04_bwa_delly_ins.bcf \
+    ${out}05_bwa_delly_del.bcf \
+    ${out}06_bwa_delly_dup_inv.bcf
+    
 bcftools view -i '(N_PASS(FT!="PASS") / N_PASS(GT!="RR")) >=  0.8' -O v -o 08_delly_genofilter.vcf 07_delly_SVfilter.vcf
 
 bcftools query -f '%CHROM\t%POS\t%INFO/END\t%SVTYPE\tdelly_unfiltered\n' ${out}01_bwa_delly_genotypes.bcf > ${out}delly_summary.tsv
