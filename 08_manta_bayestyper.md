@@ -46,16 +46,74 @@ Here, we applied thresholds to filter for SV call quality. All SVs were required
 
 ```
     bcftools view \
-        -i '(FILTER=="PASS" & PR >= 10 & FORMAT/FT == "PASS" & FILTER!="MaxDepth" & FILTER!="Ploidy" & FILTER!="MaxMQ0Frac" & FILTER!="NoPairSupport" & SVLEN<=-50 & SVTYPE=="DEL") | (FILTER=="PASS" & PR >= 10 & FORMAT/FT == "PASS" & FILTER!="MaxDepth" & FILTER!="Ploidy" & FILTER!="MaxMQ0Frac" & FILTER!="NoPairSupport" & SVLEN>=50 & SVTYPE!="BND")' \
+        -i '(FILTER=="PASS" & PR >= 10 & FORMAT/FT == "PASS" & FILTER!="MaxDepth" & FILTER!="Ploidy" & FILTER!="MaxMQ0Frac" & FILTER!="NoPairSupport" & SVLEN<=-50 & SVLEN > -50000 & SVTYPE=="DEL") | (FILTER=="PASS" & PR >= 10 & FORMAT/FT == "PASS" & FILTER!="MaxDepth" & FILTER!="Ploidy" & FILTER!="MaxMQ0Frac" & FILTER!="NoPairSupport" & SVLEN>=50 & SVTYPE!="BND" & SVLEN < 50000)' \
         -T ^${exclude} \
         -O z -o ${out}batch_filtered/01_batch_filtered.SVs.vcf.gz \
         ${raw_data}batch_total.vcf.gz
+bcftools view \
+    -i 'SVLEN<50000 & SVLEN >-50000' \
+    -O z -o ${mantaB}02_batch_length_filtered.SVs.vcf.gz \
+    ${mantaB}01_batch_filtered.SVs.vcf.gz
 
 bcftools view \
     -i '(FILTER=="PASS" & PR >= 10 & FORMAT/FT == "PASS" & FILTER!="MaxDepth" & FILTER!="Ploidy" & FILTER!="MaxMQ0Frac" & FILTER!="NoPairSupport" & SVLEN<=-50 & SVTYPE=="DEL") | (FILTER=="PASS" & PR >= 10 & FORMAT/FT == "PASS" & FILTER!="MaxDepth" & FILTER!="Ploidy" & FILTER!="MaxMQ0Frac" & FILTER!="NoPairSupport" & SVLEN>=50 & SVTYPE!="BND")' \
     -T ^${exclude} \
     -O z -o ${out}joint_filtered/01_joint_filtered.SVs.vcf.gz \
     ${raw_data}joint_total.vcf.gz
+bcftools view \
+    -i 'SVLEN<50000 & SVLEN >-50000' \
+    -O z -o ${mantaJ}02_joint_length_filtered.SVs.vcf.gz \
+    ${mantaJ}01_joint_filtered.SVs.vcf.gz
+```
+It is important to note that in the process of merging multiple batches, some called SV types may not match. Breakend calls in particular are problematic as they suggest a lack of evidence to call a SV type in a given batch. To identify and remove SV calls that passed inital filtering thresholds, but may have been called as a breakend in either the joint male or female calls or the batched samples we counted these sites as per:
+
+```
+bcftools view -H ${mantaB}02_batch_length_filtered.SVs.vcf | \
+    awk '{print $1, $2, $3}' | \
+    grep ";" | \
+    tr ";" "\t" | \
+    tr ":" "\t" | \
+    awk '{print $1","$2","$3","$10","$11}' > ${mantaB}batch_mistatch_calls.csv
+
+bcftools view -H ${mantaJ}02_joint_length_filtered.SVs.vcf | \
+    awk '{print $1, $2, $3}' | \
+    grep ";" | \
+    tr ";" "\t" | \
+    tr ":" "\t" | \
+    awk '{print $1","$2","$3","$10","$11}' > ${mantaJ}joint_mistatch_calls.csv
+```
+These files were opened in excel and non-matching SVtypes were identified. This indicated that there were 8 of these sites in the batched data and 6 in the joint data. These sites were either INDELS or Insertions/Duplications. However, there were a few sites that were paired with breakened calls (n = 4 batch; n = 1 joint). Because breakends may be indicative of unresolved complex SVs, these sites were removed prior to genotyping.
+
+```
+bgzip ${mantaB}02_batch_length_filtered.SVs.vcf
+tabix ${mantaB}02_batch_length_filtered.SVs.vcf.gz
+bcftools view -t ^NC_044277.2:125934488,NC_044279.2:66579444,NC_044282.2:4557370 \
+    -O v -o ${mantaB}03_batch_consolidated_sites.vcf \
+    ${mantaB}02_batch_length_filtered.SVs.vcf.gz
+
+bgzip ${mantaJ}02_joint_length_filtered.SVs.vcf
+tabix ${mantaJ}02_joint_length_filtered.SVs.vcf.gz
+bcftools view -t ^NC_044279.2:66579444 \
+    -O v -o ${mantaJ}03_joint_consolidated_sites.vcf \
+    ${mantaJ}02_joint_length_filtered.SVs.vcf.gz
+```
+
+Candidate SVs were normalised prior to conversion to BayesTyper format as per:
+```
+bcftools norm --threads 24 -f ${chr_ref} -m -any \
+    -O v -o ${mantaB}04_batch_candidates_norm.vcf ${mantaB}03_batch_consolidated.vcf
+
+bcftools norm --threads 24 -f ${chr_ref} -m -any \
+    -O v -o ${mantaJ}04_joint_candidates_norm.vcf ${mantaJ}03_joint_consolidated.vcf
+```
+This left 35,832 SVs in the batch call set and 32,072 in the joint call set for allele conversion and merging for BayesTyper. The `04_{batch,joint}_candidates_norm.vcf` file was used to explore SV summary characteristics as outlined below.
+
+```
+bcftools query -f '%CHROM\t%POS\t%INFO/END\t%SVLEN\t%SVTYPE\tmantaB_unfiltered\n' ${raw_data}batch_total.vcf.gz > ${out}manta_summary.tsv
+bcftools query -f '%CHROM\t%POS\t%INFO/END\t%SVLEN\t%SVTYPE\tmantaB_SVfiltered\n' ${mantaB}04_batch_candidates_norm.vcf >> ${out}manta_summary.tsv
+
+bcftools query -f '%CHROM\t%POS\t%INFO/END\t%SVLEN\t%SVTYPE\tmantaJ_unfiltered\n' ${raw_data}joint_total.vcf.gz > ${out}manta_summary.tsv
+bcftools query -f '%CHROM\t%POS\t%INFO/END\t%SVLEN\t%SVTYPE\tmantaJ_SVfiltered\n' ${mantaJ}04_joint_candidates_norm.vcf >> ${out}manta_summary.tsv
 ```
 
 ## Convert Manta VCF to remove symbolic alleles
@@ -72,29 +130,26 @@ bgzip ${out}Trained_SV_scaffolds_renamed_norm.vcf; tabix -pvcf ${out}Trained_SV_
 
 cat chr_list.txt | xargs tabix -h ${out}Trained_SV_scaffolds_renamed_norm.vcf.gz > ${out}Trained_SV_scaffolds_renamed.sorted.vcf
 ```
+
 Allele conversion and file combination was then conducted as per:
 
 ```
-bcftools norm --threads 24 -f ${chr_ref} -m -any \
-    -O v -o ${bayes}mantaB/02_batch_candidates_norm.vcf ${bayes}mantaB/01_batch_filtered.SVs.vcf
 bayesTyperTools convertAllele \
-    --variant-file ${bayes}mantaB/02_bayestyper_candidates_norm.vcf \
+    --variant-file ${bayes}mantaB/04_batch_candidates_norm.vcf \
     --genome-file ${chr_ref} \
-    --output-prefix ${bayes}03_batch_converted
-bayesTyperTools combine -v ${deepV},MANTAB:${bayes}mantaB/03_batch_converted.vcf \
-    -o ${bayes}mantaB/04_batch_combined -z
+    --output-prefix ${bayes}05_batch_converted
+bayesTyperTools combine -v ${deepV},MANTAB:${bayes}mantaB/05_batch_converted.vcf \
+    -o ${bayes}mantaB/06_batch_combined -z
 
 
-bcftools norm --threads 24 -f ${chr_ref} -m -any \
-    -O v -o ${bayes}mantaJ/02_joint_candidates_norm.vcf ${bayes}mantaJ/01_joint_filtered.SVs.vcf
 bayesTyperTools convertAllele \
-    --variant-file ${bayes}mantaJ/02_bayestyper_candidates_norm.vcf \
+    --variant-file ${bayes}mantaJ/04_joint_candidates_norm.vcf \
     --genome-file ${chr_ref} \
-    --output-prefix ${bayes}mantaJ/03_joint_converted
-bcftools sort -T ${bayes}mantaJ/ -O v -o ${bayes}mantaJ/04_joint_converted.sorted.vcf \
-    ${bayes}mantaJ/03_joint_converted.vcf
-bayesTyperTools combine -v ${deepV},MANTA:${bayes}mantaJ/04_joint_converted.sorted.vcf \
-    -o ${bayes}mantaJ/05_joint_combined -z
+    --output-prefix ${bayes}mantaJ/05_joint_converted
+bcftools sort -T ${bayes}mantaJ/ -O v -o ${bayes}mantaJ/06_joint_converted.sorted.vcf \
+    ${bayes}mantaJ/05_joint_converted.vcf
+bayesTyperTools combine -v ${deepV},MANTA:${bayes}mantaJ/06_joint_converted.sorted.vcf \
+    -o ${bayes}mantaJ/07_joint_combined -z
 ```
 
 ## Running KMC and makeBloom
@@ -292,7 +347,7 @@ We used `bcftools isec` to resolve the class of each SV present in genotyped out
 
 ```
 
-4) Annotate VCF for individual counts:
+### Annotate VCF with SV type  
 First prepare the annotation file by identifying the resolvable SVs and their types:
 ```
 bcftools query -f '%CHROM\t%POS\n' batch_filtered/07_batch_filtered_genotypes.vcf > batch_geno_sites

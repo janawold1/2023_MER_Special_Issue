@@ -81,14 +81,15 @@ Used bwa_smoove_annotated.vcf.gz for unfiltered SV summary stats. Created filter
 bcftools view -t ^NC_044302.2 -O v -o ${out}01_smoove_unfiltered.vcf ${out}bwa_smoove.annotated.vcf.gz
 bcftools view -i '(SVTYPE = "DEL" & FMT/DHFFC[0-168] < 0.7) | (SVTYPE = "DUP" & FMT/DHBFC[0-168] > 1.3) | (SVTYPE = "INV")' \
     -O v -o ${out}02_smoove_SVfiltered.vcf ${out}01_smoove_unfiltered.vcf
-bcftools view -i '(MSHQ>=3)' -O v -o ${out}03_smoove_genofiltered.vcf ${out}02_smoove_SVfiltered.vcf
+bcftools view -i 'SVLEN < 50000 & SVLEN > -50000' -O v -o 03_smoove_length_filtered.vcf 02_smoove_SVfiltered.vcf
+bcftools view -i '(MSHQ>=3)' -O v -o ${out}04_smoove_genofiltered.vcf ${out}03_smoove_length_filtered.vcf
 ```
 
 ### Initial summaries
 ```
-bcftools query -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\tsmoove_unfiltered\n' ${out}01_smoove_unfiltered.vcf > ${out}smoove_summary.tsv
-bcftools query -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\tsmoove_SVfiltered\n' ${out}02_smoove_SVfiltered.vcf >> ${out}smoove_summary.tsv
-bcftools query -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\tsmoove_genofiltered\n' ${out}03_smoove_genofiltered.vcf >> ${out}smoove_summary.tsv
+bcftools query -f '%CHROM\t%POS\t%INFO/END\t%SVLEN\t%SVTYPE\tsmoove_unfiltered\n' ${out}01_smoove_unfiltered.vcf > ${out}smoove_summary.tsv
+bcftools query -f '%CHROM\t%POS\t%INFO/END\t%SVLEN\t%SVTYPE\tsmoove_SVfiltered\n' ${out}03_smoove_length_filtered.vcf >> ${out}smoove_summary.tsv
+bcftools query -f '%CHROM\t%POS\t%INFO/END\t%SVLEN\t%SVTYPE\tsmoove_genofiltered\n' ${out}04_smoove_genofiltered.vcf >> ${out}smoove_summary.tsv
 ```
 
 ## Mendelian inheritance tests
