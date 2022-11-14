@@ -188,6 +188,7 @@ filtered %>%
   labs(x = "Chromosome", y = "Proportion of impacted base pairs", title = "Relative proportion of chromosome impacted by structural variants") +
   theme_light() +
   facet_wrap(~data, scales = "free_y") +
+  ylim(0, 0.095) +
   scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CD8862", "Insertion" = "#BCA888", "Inversion" = "#DCC949"))
 dev.off()
 ```
