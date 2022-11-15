@@ -159,20 +159,10 @@ wait
 Then sample batches were merged according to sample ID with bcftools.
 ```
 bcftools merge -m id -O z -o ${cute}04_raw_cuteSV_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch1_cuteSV_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch2_cuteSV_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch3_cuteSV_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch4_cuteSV_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch5_cuteSV_genotypes.vcf.gz \
-    ${cute}genotypes/sample_batch6_cuteSV_genotypes.vcf.gz
+    ${cute}genotypes/sample_batch*_cuteSV_genotypes.vcf.gz
 
 bcftools merge -m id -O z -o ${sniff}/04_raw_sniffles_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch1_sniffles_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch2_sniffles_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch3_sniffles_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch4_sniffles_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch5_sniffles_genotypes.vcf.gz \
-    ${sniff}genotypes/sample_batch6_sniffles_genotypes.vcf.gz
+    ${sniff}genotypes/sample_batch*_sniffles_genotypes.vcf.gz
 
 tabix ${cute}04_raw_cuteSV_genotypes.vcf.gz
 tabix ${sniff}04_raw_sniffles_genotypes.vcf.gz
@@ -193,70 +183,73 @@ bcftools isec \
     ${sniff}04_raw_sniffles_genotypes.vcf.gz -p ${sniff}
 ```
 
-
 To make comparisons among SV tools similar, the SV type called by either CuteSV or Sniffles were resoved as per below.
 
 1. Examine overlap between SVs in `03_combined_variants.vcf.gz` and the locations of genotyped variants in `04_raw_{cuteSV,sniffles}_genotypes.vcf.gz`
 
 ```
-
-
-bcftools query -f '%CHROM\t%POS\t%END\n' ${cute}04_raw_cuteSV_genotypes.vcf.gz > ${cute}geno_sites
-bcftools query -f '%CHROM\t%POS\t%END\n' ${sniff}04_raw_sniffles_genotypes.vcf.gz > ${sniff}geno_sites
+bcftools query -f '%CHROM\t%POS\n' ${cute}04_raw_cuteSV_genotypes.vcf.gz > ${cute}geno_sites
+bcftools query -f '%CHROM\t%POS\n' ${sniff}04_raw_sniffles_genotypes.vcf.gz > ${sniff}geno_sites
 ```
 
-2. Count overlaping SVtypes.  
-
+2. Count overlaping SVtypes
+For each of the genotypes outputs we assessed the number of SVs overlapping with genotype outputs.  
 ```
-bcftools query -T ${cute}geno_sites -f '%SVTYPE\n' \
-    ${out}bayestyper/batch_filtered/02_batch_filtered_norm.vcf.gz | sort | uniq -c
+bcftools query -T ${cute}geno_sites -f '%CHROM\t%POS\t%SVTYPE\t%SVLEN\n' \
+    ${cute}02_bayestyper_candidates_norm.vcf.gz > ${cute}geno_types
 
-bcftools query -T ${sniff}geno_sites -f '%SVTYPE\n' \
-    ${out}bayestyper/joint_filtered/02_joint_filtered_norm.vcf.gz | sort | uniq -c
+bcftools query -T ${sniff}geno_sites -f '%CHROM\t%POS\t%SVTYPE\t%SVLEN\n' \
+    ${sniff}02_bayestyper_candidates_norm.vcf.gz > ${sniff}geno_types
+```
+Once information about the type and size of SVs overlapping in the genotype output and input files was resolved, we ensured the number of SVs unique SVs matched.  
+```
+awk '{print $1, $2}' ${cute}geno_types | sort | uniq -c | sort -n | wc -l
+awk '{print $1, $2}' ${sniff}geno_types | sort | uniq -c | sort -n | wc -l
+```
+We expected to find 2,058 SVs in the CuteSV call set and 5,030 SV in the Sniffles call set.  
+
+A number of SVs from the VCF prior to running `bayesTyperTools combine` overlapped with the sites used in genotyping. This led to retrieving we couldn't resolve at least 15 more SVs from the CuteSV data call (n = 2,066) set and 37 more SVs from the Sniffles call set than expected (n = 5,067).
+
+3. Find non-overlapping sites
+
+The size of each of the overlapping sites were estimated as per below. This aided in resolving which of the overlapping SVs were represented in the genotype output.
+```
+bcftools query -t $site -f '%CHROM\t%POS\t%SVTYPE\t%SVLEN\n' \
+    ${cute}02_bayestyper_candidates_norm.vcf.gz | wc
+bcftools query -t $site -f '%ALT\n' \
+    ${cute}04_raw_cuteSV_genotypes.vcf.gz | wc
+
+bcftools query -t $site -f '%CHROM\t%POS\t%SVTYPE\t%SVLEN\n' \
+    ${sniff}02_bayestyper_candidates_norm.vcf.gz | wc
+bcftools query -t $site -f '%ALT\n' \
+    ${sniff}04_raw_sniffles_genotypes.vcf.gz | wc
 ```
 
-We expected to find 2,058 SVs in the CuteSV call set and 5,030 SV in the Sniffles call set. As noted above, in the 
-A number of SVs from the VCF prior to running `bayesTyperTools combine` overlapped with the sites used in genotyping. This led to retrieving we couldn't resolve at least X more SVs from the CuteSV data call set and 37 more SVs from the Sniffles call set than expected (n = 5,067).
+4. Annotate VCF
+Once the `geno_types` file was edited for both the CuteSV and Sniffles call sets, the raw genotype files were annotated with SV type and length.  
 
-3) Find non-overlapping sites (i.e., those present in genotyped output, but absent in call set):
-```
+To begin, the `geno_types` file was edited so the first line contained `#CHROM POS SVTYPE  SVLEN` with nano.  
 
-```
-
-4) Annotate VCF for individual counts:
-First prepare the annotation file by identifying the resolvable SVs and their types:
-```
-bcftools query -f '%CHROM\t%POS\n' batch_filtered/07_batch_filtered_genotypes.vcf > batch_geno_sites
-bcftools query -T batch_geno_sites -f '%CHROM\t%POS\t%SVTYPE\t%SVLEN\n' batch_filtered/02_batch_filtered_norm.vcf.gz > batch_conversion
-
-bcftools query -f '%CHROM\t%POS\n' joint_filtered/07_joint_filtered_genotypes.vcf > joint_geno_sites
-bcftools query -T joint_geno_sites -f '%CHROM\t%POS\t%SVTYPE\t%SVLEN\n' joint_filtered/02_joint_filtered_norm.vcf.gz > joint_conversion
-```
-
-Then edit the `batch_conversion` file so the first line in this file contains `#CHROM POS SVTYPE  SVLEN` with nano.  
-
-And create a file that captures the information to be appended into the header of the VCF.
-
-Contents of annots.hdr for the Sniffles SV calls for example:
+And a `annots.hdr` file was created capturing the information to be appended into the header of the VCF. For example:
 ```
 ##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant called by Sniffles">
 ##INFO=<ID=SVLEN,Number=1,Type=String,Description="Length of structural variant called by Sniffles">
 ```
 Now time to annotate the file to continue with the genotype based analyses.
 ```
-bgzip ${cute}conversion
-bgzip ${sniff}conversion
+bgzip ${cute}geno_types
+bgzip ${sniff}geno_types
 
-tabix -s1 -b2 -e2 ${cute}conversion.gz
-tabix -s1 -b2 -e2 ${sniff}conversion.gz
+tabix -s1 -b2 -e2 ${cute}geno_types.gz
+tabix -s1 -b2 -e2 ${sniff}geno_types.gz
 
 bcftools annotate -a ${cute}conversion.gz -h ${cute}annots.hdr \
-    -c CHROM,POS,SVTYPE,SVLEN -O v -o ${cute}06_cuteSV_annotated.vcf \
-    ${cute}05_cuteSV_SV_genotypes.vcf
+    -c CHROM,POS,SVTYPE,SVLEN -O v -o ${cute}05_cuteSV_annotated.vcf \
+    ${cute}04_raw_cuteSV_genotypes.vcf
 
 bcftools annotate -a ${sniff}conversion.gz -h ${sniff}annots.hdr \
-    -c CHROM,POS,SVTYPE,SVLEN -O v -o ${sniff}06_sniffles_annotated.vcf \
-    ${sniff}05_sniffles_SV_genotypes.vcf
+    -c CHROM,POS,SVTYPE,SVLEN -O v -o ${sniff}05_sniffles_annotated.vcf \
+    ${sniff}04_sniffles_genotypes.vcf.gz
 ```
 
 ## Genotype quality filtering
@@ -265,13 +258,13 @@ SVs were simultaneously filtered for missingness and to ensure variant sites wer
 ```
  bcftools view --threads 24 \
     -i '((N_PASS(GT=="mis") < 35) & (N_PASS(GT=="alt") >= 1) & (N_PASS(SAF!=0) < 35))' \
-    -O z -o ${cute}05_cuteSV_SV_genotypes.vcf.gz \
-    ${cute}04_raw_cuteSV_DeepV_genotypes.vcf.gz
+    -O z -o ${cute}06_cuteSV_genotype_filtered.vcf.gz \
+    ${cute}05_raw_cuteSV_annotated.vcf
 
  bcftools view --threads 24 \
     -i '((N_PASS(GT=="mis") < 35) & (N_PASS(GT=="alt") >=1 ) & (N_PASS(SAF!=0) < 35))' \
-    -O z -o ${sniff}05_sniffles_SV_genotypes.vcf.gz \
-    ${sniff}04_raw_sniffles_DeepV_genotypes.vcf.gz
+    -O z -o ${sniff}06_sniffles_genotype_filtered.vcf.gz \
+    ${sniff}05_sniffles_annotated.vcf
 ```
 We are now ready to test Mendelian trios and prepare summary files.
 
@@ -280,8 +273,9 @@ We are now ready to test Mendelian trios and prepare summary files.
 To test the consistency of genotyping results, tests of mendelian inheritance were used. Sites that conformed to mendelian expectations for 120 trios were found with:
 ```
 bcftools +mendelian -m a -T ${trio} -O v \
-    -o ${cute}07_cuteSV_trios.vcf \
-    ${cute}06_cuteSV_annotated.vcf
+    -o ${cute}07_cuteSV_genotype_filtered_trios.vcf \
+    ${cute}06_cuteSV_genotype_filtered.vcf.gz
+
 bcftools +mendelian -m a -T ${trio} -O v \
     -o ${sniff}07_sniffles_trios.vcf \
     ${sniff}06_sniffles_annotated.vcf
