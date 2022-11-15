@@ -410,37 +410,37 @@ bcftools +mendelian -m a -T ${trio} -O v -o ${out}bayestyper/batch_filtered/09_b
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0_fail_joint_manta_genofilter\n' \
-    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.05' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.05_fail_joint_manta_genofilter\n' \
-    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.1' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.1_fail_joint_manta_genofilter\n' \
-    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.2' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.2_fail_joint_manta_genofilter\n' \
-    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf
 
 
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0_fail_batch_manta_genofilter\n' \
-    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.05' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.05_fail_batch_manta_genofilter\n' \
-    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.1' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.1_fail_batch_manta_genofilter\n' \
-    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.2' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.2_fail_batch_manta_genofilter\n' \
-    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf
 ```
 ## Summarising the number of SVs carried by individuals
 
