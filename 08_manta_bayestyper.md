@@ -320,7 +320,7 @@ cat ${batch}batch_genos | wc -l # Total records
 cat ${joint}joint_genos | sort | uniq | wc -l # Total unique records
 cat ${joint}joint_genos | wc -l # Total records
 ```
-In both instances, the number of regions remained consistent. 
+In both instances, the number of regions remained consistent.  
 
 ### Extracting overlaping SVs
 
@@ -330,12 +330,12 @@ Here we attempted to extract SVs from the normalised manta call sets prior to re
 bcftools query \
     -T ${batch}batch_genos \
     -f '%CHROM\t%POS\t%END\t%SVTYPE\n' \
-    ${batch}batch_filtered/02_batch_filtered_norm.vcf.gz | sort | uniq -c
+    ${batch}batch_filtered/02_batch_filtered_norm.vcf.gz | sort | uniq -c | sort -n | tail
 
 bcftools query \
     -T ${joint}joint_genos \
     -f '%CHROM\t%POS\t%END\t%SVTYPE\n' \
-    ${joint}joint_filtered/02_joint_filtered_norm.vcf.gz | sort | uniq -c
+    ${joint}joint_filtered/02_joint_filtered_norm.vcf.gz | sort | uniq -c | sort -n | tail
 ```
 
 Found that 76 SVs don't overlap in the batch data and 126 SVs don't overlap in the joint data.  
@@ -357,7 +357,7 @@ bcftools query -f '%CHROM\t%POS\n' joint_filtered/07_joint_filtered_genotypes.vc
 bcftools query -T joint_geno_sites -f '%CHROM\t%POS\t%SVTYPE\t%SVLEN\n' joint_filtered/02_joint_filtered_norm.vcf.gz > joint_conversion
 ```
 
-Then edit the ```batch_conversion``` file so the first line in this file contains ```#CHROM POS SVTYPE  SVLEN``` with nano.  
+Then edit the `batch_conversion` file so the first line in this file contains `#CHROM POS SVTYPE  SVLEN` with nano.  
 
 And create a file that captures the information to be appended into the header of the VCF.
 
