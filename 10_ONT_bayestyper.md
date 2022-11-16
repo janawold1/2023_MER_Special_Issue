@@ -277,8 +277,8 @@ bcftools +mendelian -m a -T ${trio} -O v \
     ${cute}06_cuteSV_genotype_filtered.vcf.gz
 
 bcftools +mendelian -m a -T ${trio} -O v \
-    -o ${sniff}07_sniffles_trios.vcf \
-    ${sniff}06_sniffles_annotated.vcf
+    -o ${sniff}07_sniffles_genotype_filtered_trios.vcf \
+    ${sniff}06_sniffles_genotype_filtered.vcf
 ```
 The proportion of genotyped sites that adhered to Mendelian inheritance expectations were found with:
 ```
@@ -286,86 +286,34 @@ for i in {0,0.05,0.1,0.2}
     do
     bcftools query -i "(MERR / N_PASS(GT!="mis")) <=${i}" \
         -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t${i}_fail_cuteSV_genofilter\n' \
-        ${cute}07_cuteSV_trios.vcf >> /kakapo-data/bayestyper/summary/cuteSV_mendel.tsv
+        ${cute}07_trios.vcf >> /kakapo-data/bayestyper/summary/cuteSV_mendel.tsv
     bcftools query -i "(MERR / N_PASS(GT!="mis")) <=${i}" \
         -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t${i}_fail_sniffles_genofilter\n' \
-        ${sniff}07_sniffles_trios.vcf >> /kakapo-data/bayestyper/summary/sniffles_mendel.tsv
+        ${sniff}08_sniffles_trios.vcf >> /kakapo-data/bayestyper/summary/sniffles_mendel.tsv
 done
 ```
-## Summarising the number of SVs carried by individuals
-
+## Summarising the number of SVs carried by individuals and generations  
+A summary of individual genotypes and generation for the subset of individuals that are not resulting from backcrossing (i.e., true founders, F1 and F2's) were used to assess the proportion of SVs passing different Mendelian Inheritance thresholds.  
 ```
-while read -r line
-    do
-    indiv=$(echo $line | awk '{print $1}')
-    gen=$(echo $line | awk '{print $2}')
-    echo "Counting SVs for $indiv..."
-    bcftools view -s ${indiv} ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf | bcftools query -i 'GT!= "RR" & GT!="mis"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\n' | awk -v var="$gen" '{print $0"\t"var}' >> ${out}bayestyper/summary/manta_batch_generations.tsv
-    bcftools view -s ${indiv} ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf | bcftools query -i 'GT!= "RR" & GT!="mis"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\n' | awk -v var="$gen" '{print $0"\t"var}' >> ${out}bayestyper/summary/manta_joint_generations.tsv
-done < /kakapo-data/metadata/generations.tsv
-```
-
-
-## Lineage Comparisons
-```
-mkdir -p ${out}bayestyper/lineage_{batch,joint}_comparisons
-
-bcftools view -s M /kakapo-data/bwa/manta/raw_variants/batch_total.vcf.gz | \
-    bcftools view -i 'GT=="alt"' -O z -o ${out}bayestyper/lineage_batch_comparisons/unfiltered/RH_unfiltered_variants.vcf.gz
-bcftools view -s M /kakapo-data/bwa/manta/raw_variants/joint_total.vcf.gz | \
-    bcftools view -i 'GT=="alt"' -O z -o ${out}bayestyper/lineage_joint_comparisons/unfiltered/RH_unfiltered_variants.vcf.gz
-
-bcftools view -s ^M,G,F,R,N,P,O,S /kakapo-data/bwa/manta/raw_variants/batch_total.vcf.gz |\
-    bcftools view -i 'GT=="alt"' -O z -o ${out}bayestyper/lineage_batch_comparisons/unfiltered/SI_unfiltered_variants.vcf.gz
-bcftools view -s ^M,G,F,R,N,P,O,S /kakapo-data/bwa/manta/raw_variants/joint_total.vcf.gz |\
-    bcftools view -i 'GT=="alt"' -O z -o ${out}bayestyper/lineage_joint_comparisons/unfiltered/SI_unfiltered_variants.vcf.gz
-
-bcftools index ${out}bayestyper/lineage_batch_comparisons/unfiltered/RH_unfiltered_variants.vcf.gz
-bcftools index ${out}bayestyper/lineage_batch_comparisons/unfiltered/SI_unfiltered_variants.vcf.gz
-
-bcftools index ${out}bayestyper/lineage_joint_comparisons/unfiltered/RH_unfiltered_variants.vcf.gz
-bcftools index ${out}bayestyper/lineage_joint_comparisons/unfiltered/SI_unfiltered_variants.vcf.gz
-
-bcftools isec ${out}bayestyper/lineage_batch_comparisons/unfiltered/RH_unfiltered_variants.vcf.gz \
-    ${out}bayestyper/lineage_batch_comparisons/unfiltered/SI_unfiltered_variants.vcf.gz \
-    -p ${out}bayestyper/lineage_batch_comparisons/unfiltered/
-
-bcftools isec ${out}bayestyper/lineage_joint_comparisons/unfiltered/RH_unfiltered_variants.vcf.gz \
-    ${out}bayestyper/lineage_joint_comparisons/unfiltered/SI_unfiltered_variants.vcf.gz \
-    -p ${out}bayestyper/lineage_joint_comparisons/unfiltered/
-
-bcftools query -f '%CHROM\t%POS\n' \
-    ${out}bayestyper/lineage_batch_comparisons/unfiltered/0000.vcf > ${out}bayestyper/lineage_batch_comparisons/unfiltered/Fiordland_unfiltered_private_sites.txt
-bcftools query -f '%CHROM\t%POS\n' \
-    ${out}bayestyper/lineage_batch_comparisons/unfiltered/0001.vcf > ${out}bayestyper/lineage_batch_comparisons/unfiltered/Rakiura_unfiltered_private_sites.txt
-bcftools query -f '%CHROM\t%POS\n' \
-    ${out}bayestyper/lineage_batch_comparisons/unfiltered/0002.vcf > ${out}bayestyper/lineage_batch_comparisons/unfiltered/Shared_unfiltered_sites.txt
-
-bcftools query -f '%CHROM\t%POS\n' \
-    ${out}bayestyper/lineage_joint_comparisons/unfiltered/0000.vcf > ${out}bayestyper/lineage_joint_comparisons/unfiltered/Fiordland_unfiltered_private_sites.txt
-bcftools query -f '%CHROM\t%POS\n' \
-    ${out}bayestyper/lineage_joint_comparisons/unfiltered/0001.vcf > ${out}bayestyper/lineage_joint_comparisons/unfiltered/Rakiura_unfiltered_private_sites.txt
-bcftools query -f '%CHROM\t%POS\n' \
-    ${out}bayestyper/lineage_joint_comparisons/unfiltered/0002.vcf > ${out}bayestyper/lineage_joint_comparisons/unfiltered/Shared_unfiltered_sites.txt
+bcftools view \
+    -S /kakapo-data/metadata/target_samples \
+    -O v -o ${cute}08_cuteSV_genofilter_trio_target_samples.vcf \
+    ${cute}07_cuteSV_genotype_filtered_trios.vcf
+bcftools view \
+    -S /kakapo-data/metadata/target_samples \
+    -O v -o ${cute}08_cuteSV_genofilter_trio_target_samples.vcf \
+    ${cute}07_cuteSV_genotype_filtered_trios.vcf
 
 while read -r line
     do
     indiv=$(echo $line | awk '{print $1}')
     gen=$(echo $line | awk '{print $2}')
     echo "Counting SVs for $indiv..."
-    bcftools view -s ${indiv} -R ${out}bayestyper/lineage_batch_comparisons/unfiltered/Fiordland_unfiltered_private_sites.txt raw_variants/batch_total.vcf.gz | bcftools query -i 'GT=="alt"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVTYPE\tFiordland_unfiltered_lineage\n' >> ${out}mantaB_lineage_counts.tsv
-    bcftools view -s ${indiv} -R ${out}bayestyper/lineage_batch_comparisons/unfiltered/Rakiura_unfiltered_private_sites.txt raw_variants/batch_total.vcf.gz | bcftools query -i 'GT=="alt"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVTYPE\tRakiura_unfiltered_lineage\n' >> ${out}mantaB_lineage_counts.tsv
-    bcftools view -s ${indiv} -R ${out}bayestyper/lineage_batch_comparisons/unfiltered/Shared_unfiltered_sites.txt raw_variants/batch_total.vcf.gz | bcftools query -i 'GT=="alt"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVTYPE\tShared_unfiltered_lineage\n' >> ${out}mantaB_lineage_counts.tsv
+    bcftools view -s ${indiv} ${cute}08_cuteSV_genotypefiltered_trio_samples.vcf \
+        | bcftools query -i 'GT!= "RR" & GT!="mis"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\n' \
+        | awk -v var="$gen" '{print $0"\t"var"\tCuteSV"}' >> ${out}bayestyper/summary/cute_generations.tsv
+    bcftools view -s ${indiv} ${sniff}08_sniffles_genotypefiltered_trio_target_samples.vcf \
+        | bcftools query -i 'GT!= "RR" & GT!="mis"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\n' \
+        | awk -v var="$gen" '{print $0"\t"var"\tSniffles"}' >> ${out}bayestyper/summary/sniffles_generations.tsv
 done < /kakapo-data/metadata/generations.tsv
-
-while read -r line
-    do
-    indiv=$(echo $line | awk '{print $1}')
-    gen=$(echo $line | awk '{print $2}')
-    echo "Counting SVs for $indiv..."
-    bcftools view -s ${indiv} -R ${out}bayestyper/lineage_joint_comparisons/unfiltered/Fiordland_unfiltered_private_sites.txt ${out}raw_variants/joint_total.vcf.gz | bcftools query -i 'GT=="alt"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVTYPE\tFiordland_unfiltered_lineage\n' >> ${out}mantaJ_lineage_counts.tsv
-    bcftools view -s ${indiv} -R ${out}bayestyper/lineage_joint_comparisons/unfiltered/Rakiura_unfiltered_private_sites.txt ${out}raw_variants/joint_total.vcf.gz | bcftools query -i 'GT=="alt"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVTYPE\tRakiura_unfiltered_lineage\n' >> ${out}mantaJ_lineage_counts.tsv
-    bcftools view -s ${indiv} -R ${out}bayestyper/lineage_joint_comparisons/unfiltered/Shared_unfiltered_sites.txt ${out}raw_variants/joint_total.vcf.gz | bcftools query -i 'GT=="alt"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVTYPE\tShared_unfiltered_lineage\n' >> ${out}mantaJ_lineage_counts.tsv
-done < /kakapo-data/metadata/generations.tsv
-
 ```
