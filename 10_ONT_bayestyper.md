@@ -243,11 +243,11 @@ bgzip ${sniff}geno_types
 tabix -s1 -b2 -e2 ${cute}geno_types.gz
 tabix -s1 -b2 -e2 ${sniff}geno_types.gz
 
-bcftools annotate -a ${cute}conversion.gz -h ${cute}annots.hdr \
+bcftools annotate -a ${cute}geno_types.gz -h ${cute}annots.hdr \
     -c CHROM,POS,SVTYPE,SVLEN -O v -o ${cute}05_cuteSV_annotated.vcf \
     ${cute}04_raw_cuteSV_genotypes.vcf
 
-bcftools annotate -a ${sniff}conversion.gz -h ${sniff}annots.hdr \
+bcftools annotate -a ${sniff}geno_types.gz -h ${sniff}annots.hdr \
     -c CHROM,POS,SVTYPE,SVLEN -O v -o ${sniff}05_sniffles_annotated.vcf \
     ${sniff}04_sniffles_genotypes.vcf.gz
 ```
