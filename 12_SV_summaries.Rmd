@@ -1,7 +1,7 @@
 ---
 title: 'Characteristics of Structural Variants discovered using different tools in the critically endangered Kākāpō'
 author: "Jana R. Wold"
-date: "15 November 2022"
+date: "18 November 2022"
 output: "pdf"
 ---
 
@@ -53,7 +53,7 @@ The below plots were used to generate Figure 1 (SV filter overlaps) and Figure 2
 delly <-read.table("inputs/delly_summary.tsv", sep = "\t", header = TRUE)
 manta <-read.table("inputs/manta_summary.tsv", sep = "\t", header = TRUE)
 smoove <-read.table("inputs/smoove_summary.tsv", sep = "\t", header = TRUE)
-cute  <- read.table("inputs/cuteSV_summary.tsv", sep = "\t", header = TRUE)
+cute  <- read.table("inputs/cute_summary.tsv", sep = "\t", header = TRUE)
 sniff <- read.table("inputs/sniffles_summary.tsv", sep = "\t", header = TRUE)
 svs <- rbind(delly, manta, smoove, cute, sniff)
 
@@ -200,56 +200,114 @@ dev.off()
 ```
 
 ## Individual Richness
-To understand relative levels of individual diversity, we counted the number of SVs present within individual kākāpō, without considering genotype. That is to say, we counted presence/absence of SVs within individual kākāpō. This was done as reliably genotyping individuals can be challenging, and summary statistics for SVs (e.g., nucleotide diversity) have not yet been established.  
-```{r Individual Comparisons, echo=FALSE, fig.align='center'}
-delly_gen
-manta_gen
-smoove_gen
-cuteSV_gen
-Sniffles_gen
-generations <- rbind(delly_gen, manta_gen, smoove_gen, cuteSV_gen, Sniffles_gen)
+Here we explore the differences in the diversity of SV types across individual kākāpō.
+```{r Individual Data, echo=FALSE, fig.align='center'}
+delly_gen <- read.table("inputs/delly_generations.tsv", sep = "\t", header = TRUE)
+#mantaB_gen <- read.table("inputs/mantaB_generations.tsv", sep = "\t", header = TRUE)
+#mantaJ_gen <- read.table("inputs/mantaJ_generations.tsv", sep = "\t", header = TRUE)
+smoove_gen <- read.table("inputs/smoove_generations.tsv", sep = "\t", header = TRUE)
+cute_gen <- read.table("inputs/cute_generations.tsv", sep = "\t", header = TRUE)
+sniff_gen <- read.table("inputs/sniffles_generations.tsv", sep = "\t", header = TRUE)
+generations <- rbind(delly_gen, smoove_gen, cute_gen, sniff_gen)
 ```
 
+As a start, we counted the number of SVs present within individual kākāpō, without considering genotype. That is to say, we counted presence/absence of SVs within individual kākāpō. This was done as reliably genotyping individuals can be challenging, and summary statistics for SVs (e.g., nucleotide diversity) have not yet been established.  
+```{r Individual Richness, echo=FALSE, fig.align='center'}
+pdf("plots/Fig4_indiv_richness.pdf")
+ggplot(generations, aes(x=indiv, fill=SV_type)) +
+  geom_histogram(alpha = 0.7, stat = 'count') +
+  labs(x = "Individual", y = "Strucgtural Variant Count", title = "Number of SVs carried by individual kākāpō") +
+  theme_light() +
+  facet_wrap(~data, scales = "free_y") +
+  scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CED38C", "Insertion" = "#DCC949", "Inversion" = "#BCA888")) +
+  theme_light()
+dev.off()
+```
 ## Generational Diversity
 Once we assessed the number of putative SVs carried by individual kākāpō in each of the six call sets, we examoined population-scale patterns of SV diversity. Given that the vast majority of the extant kākāpō population are descendended from a single population sourced from an off-shore island, we attempted to assess the diversity of SVs through the generations. 
 
 Taking the generation data used to assess individual diversity above, we leveraged a meticulously maintained pedigree to identify individual kākāpō that are 'true' representatives of founders, F1 and F2 generations (i.e., not backcrossed).  
 ```{r Generational_Comparisons, echo=FALSE, fig.align='center'}
-delly_gen %>%
-  count(indiv, gen) %>%
-  ggplot(aes(x = gen, y = n, fill = gen)) +
-    geom_violin() +
-    labs(x = "Ancestry", y = "Total Number of Delly SV's", title = "Counts of Delly SV's by generation ") +
-    theme(axis.text = element_text(size = 14)) +
-    scale_fill_manual(values = c("RH0" = "#AD6B17","RH1" = "#CCB62F", "RH2" = "#D0C471", "SI0" = "#3E4331", "SI1" = "#66743B", "SI2" = "#BAC4C2")) +
-    theme_light()
+pdf("plots/Fig5_generation_counts.pdf")
+generations %>%
+  count(indiv, gen, data) %>%
+  ggplot(aes(x=gen, y = n, fill=gen)) +
+  geom_violin() +
+  labs(x = "Generations", y = "Structural Variant Count", title = "Number of SVs carried by individual kākāpō", fill = "Generational Groupings") +
+  theme_light() +
+  facet_wrap(~data, scales = "free_y") +
+  scale_fill_manual(values = c("RH0" = "#AD6B17","RH1" = "#CCB62F", "RH2" = "#D0C471", "SI0" = "#3E4331", "SI1" = "#66743B", "SI2" = "#BAC4C2")) +
+  theme_light()
+dev.off()
+```
 
-smoove_gen %>%
-  count(indiv,gen) %>%
-  ggplot(aes(x = gen, y = n, fill = gen)) +
-    geom_violin() +
-    labs(x = "Ancestry", y = "Total Number of Smoove SV's", title = "Counts of Smoove SV's by generation ") +
-    theme(axis.text = element_text(size = 14)) +
-    scale_fill_manual(values = c("RH0" = "#AD6B17","RH1" = "#CCB62F", "RH2" = "#D0C471", "SI0" = "#3E4331", "SI1" = "#66743B", "SI2" = "#BAC4C2")) +
-    theme_light()
+## Discriminant Analysis of Principal Components
+Here we assess population structure across generations and kākāpō lineages. We leverage the genotype filtered SVs for the 117 individuals samples that represented founding, F1 and F2 generations in the Rakiura and Fiordland lineages.  
+```{r load VCFs, echo=FALSE, fig.align='center'}
+delly_vcf <- read.vcfR("inputs/pca/11_delly_genofilter_trio_target_samples.vcf")
+delly_genind <- vcfR2genind(delly_vcf)
+pop(delly_genind) <- as.factor(c("RH0", "RH2", "RH2", "RH1", "RH2", "RH1", "RH2", "RH1", "SI0", "SI1", "SI0", "SI1", "SI1", "SI2", "SI0", "SI0", "SI0", "SI0", "SI0", "SI0", "SI1", "SI1", "SI0", "SI0", "SI0", "SI1", "SI2", "SI1", "SI1", "SI1", "SI1", "SI1", "SI0", "SI0", "SI0", "SI1", "SI1", "SI0", "SI0", "SI1", "SI1", "SI1", "SI1", "SI1", "SI1", "SI1", "SI2", "SI1", "SI1", "SI1", "SI0", "SI1", "SI0", "SI0", "SI2", "SI1", "SI2", "SI1", "SI1", "SI1", "SI1", "SI0", "SI0", "SI0", "SI0", "SI0", "SI1", "SI1", "SI0", "SI1", "SI1", "SI0", "SI1", "SI1", "SI2", "SI1", "SI2", "SI0", "SI0", "SI0", "SI2", "SI1", "SI0", "SI1", "SI1", "SI1", "SI1", "SI1", "SI0", "SI1", "SI1", "SI1", "SI0", "SI0", "SI1", "SI0", "SI1", "SI0", "SI0", "SI1", "SI0", "SI0", "SI1", "SI1", "SI1", "SI1", "SI1", "SI1", "SI0", "SI1", "SI1", "SI2", "SI0", "SI1", "SI2", "SI1", "SI1"))
 
-manta_batch_gen %>%
-  count(indiv,gen) %>%
-  ggplot(aes(x = gen, y = n, fill = gen)) +
-    geom_violin() +
-    ylim(0,350) +
-    labs(x = "Ancestry", y = "Total Number of SV's", title = "Counts of Manta - Batch SV's by generation ") +
-    theme(axis.text = element_text(size = 14)) +
-    scale_fill_manual(values = c("RH0" = "#AD6B17","RH1" = "#CCB62F", "RH2" = "#D0C471", "SI0" = "#3E4331", "SI1" = "#66743B", "SI2" = "#BAC4C2")) +
-    theme_light()
+mantaB_vcf <- read.vcfR("inputs/pca/mantaB_target_samples.vcf")
+mantaB_genind <- vcfR2genind(mantaB_vcf)
+pop(mantaB_genind) <- delly_genind$pop
 
-manta_joint_gen %>%
-  count(indiv,gen) %>%
-  ggplot(aes(x = gen, y = n, fill = gen)) +
-    geom_violin() +
-    ylim(0,350) +
-    labs(x = "Ancestry", y = "Total Number of SV's", title = "Counts of Manta - Joint SV's by generation ") +
-    theme(axis.text = element_text(size = 14)) +
-    scale_fill_manual(values = c("RH0" = "#AD6B17","RH1" = "#CCB62F", "RH2" = "#D0C471", "SI0" = "#3E4331", "SI1" = "#66743B", "SI2" = "#BAC4C2")) +
-    theme_light()
+#mantaJ_vcf <- read.vcfR("inputs/pca/")
+#mantaJ_genind <- vcfR2genind(mantaJ_vcf)
+#pop(mantaJ_genind) <- delly_genind$pop
+
+smoove_vcf <- read.vcfR("inputs/pca/06_smoove_genofilter_trio_target_samples.vcf")
+smoove_genind <- vcfR2genind(smoove_vcf)
+pop(smoove_genind) <- delly_genind$pop
+
+cute_vcf <- read.vcfR("inputs/pca/08_cuteSV_genofilter_trio_target_samples.vcf")
+cute_genind <- vcfR2genind(cute_vcf)
+pop(cute_genind) <- delly_genind$pop
+
+sniff_vcf <- read.vcfR("inputs/pca/08_sniffles_genofilter_trio_target_samples.vcf")
+sniff_genind <- vcfR2genind(sniff_vcf)
+pop(sniff_genind) <- delly_genind$pop
+```
+
+DAPCs were estimated for each of the six call sets. 
+```{r DAPC, echo=FALSE, fig.align='center'}
+myPal <- (c("#AD6D29", "#CCB732", "#CFC472", "#3F4432", "#67743C", "#BAC4C2" ))
+
+pdf("plots/Fig6_delly_DAPC.pdf")
+dapc.delly <- dapc(delly_genind, var.contrib = TRUE, scale = FALSE, n.pca = 35, n.da = nPop(delly_genind) -1)
+scatter(dapc.delly, col=transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.da = "bottomleft", posi.pca = "topleft", cell = 1.5, cex = 2, cstar = 0)
+100*dapc.delly$eig/sum(dapc.delly$eig)
+assignplot(dapc.delly)
+dev.off()
+
+dapc.mantaB <- dapc(mantaB_genind, var.contrib = TRUE, scale = FALSE, n.pca = 40, n.da = nPop(mantaB_genind) -1)
+scatter(dapc.mantaB, col = transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.da = "bottomleft", posi.pca = "topleft", cell = 1.5, cex = 2, cstar = 0)
+perc.mantaB <- 100*dapc.mantaB$eig/sum(dapc.mantaB$eig)
+assignplot(dapc.mantaB)
+
+dapc.mantaJ <- dapc(mantaJ_genind, var.contrib = TRUE, scale = FALSE, n.pca = 40, n.da = nPop(mantaB_genind) -1)
+scatter(dapc.mantaJ, col = transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.da = "bottomleft", posi.pca = "topleft", cell = 1.5, cex = 2, cstar = 0)
+perc.mantaJ <- 100*dapc.mantaJ$eig/sum(dapc.mantaJ$eig)
+assignplot(dapc.mantaJ)
+
+pdf("plots/Fig6_smoove_DAPC.pdf")
+dapc.smoove <- dapc(smoove_genind, var.contrib = TRUE, scale = FALSE, n.pca = 40, n.da = nPop(smoove_genind) -1)
+scatter(dapc.smoove, col=transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.da = "bottomleft", posi.pca = "topleft", cell = 1.5, cex = 2, cstar = 0)
+100*dapc.smoove$eig/sum(dapc.smoove$eig)
+assignplot(dapc.smoove)
+dev.off()
+
+pdf("plots/Fig6_cuteSV_DAPC.pdf")
+dapc.cute <- dapc(cute_genind, var.contrib = TRUE, scale = FALSE, n.pca = 20, n.da = nPop(cute_genind) -1)
+scatter(dapc.cute, col=transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.da = "bottomleft", posi.pca = "topleft", cell = 1.5, cex = 2, cstar = 0)
+100*dapc.cute$eig/sum(dapc.cute$eig)
+assignplot(dapc.cute)
+dev.off()
+
+pdf("plots/Fig6_sniffles_DAPC.pdf")
+dapc.sniff <- dapc(sniff_genind, var.contrib = TRUE, scale = FALSE, n.pca = 30, n.da = nPop(sniff_genind) -1)
+scatter(dapc.sniff, col=transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.da = "bottomleft", posi.pca = "topleft", cell = 1.5, cex = 2, cstar = 0)
+100*dapc.sniff$eig/sum(dapc.sniff$eig)
+assignplot(dapc.sniff)
+dev.off()
 ```
