@@ -144,7 +144,7 @@ ggplot(filtered, aes(x=size, fill=data)) +
   theme_light()
 
 # Size transformed
-#png("plots/Size_distributions.png")
+png("plots/Size_distributions.png")
 ggplot(filtered, aes(x=logsize, fill=data)) +
   geom_density(alpha = 0.5) +
   labs(x = "Structural Variant Size", y = "Proportion", title = "Size Distribution of Filtered Structural Variants") +
@@ -152,7 +152,7 @@ ggplot(filtered, aes(x=logsize, fill=data)) +
   facet_wrap(~SV_type, scales = "free_y") +
   scale_fill_manual(values = c("delly_SVfiltered" = "#7D9D33", "mantaB_SVfiltered" = "#CED38C", "mantaJ_SVfiltered" = "#DCC949", "smoove_SVfiltered" = "#BCA888", "cuteSV_SVfiltered" = "#CD8862", "sniffles_SVfiltered" = "#775B24")) +
   theme_light()
-#dev.off()
+dev.off()
 
 ggplot(filtered, aes(x=logsize, fill=data)) +
   geom_histogram(alpha = 0.7, position = "dodge") +
