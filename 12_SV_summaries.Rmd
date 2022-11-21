@@ -203,12 +203,12 @@ dev.off()
 Here we explore the differences in the diversity of SV types across individual kākāpō.
 ```{r Individual Data, echo=FALSE, fig.align='center'}
 delly_gen <- read.table("inputs/delly_generations.tsv", sep = "\t", header = TRUE)
-#mantaB_gen <- read.table("inputs/mantaB_generations.tsv", sep = "\t", header = TRUE)
+mantaB_gen <- read.table("inputs/mantaB_generations.tsv", sep = "\t", header = TRUE)
 #mantaJ_gen <- read.table("inputs/mantaJ_generations.tsv", sep = "\t", header = TRUE)
 smoove_gen <- read.table("inputs/smoove_generations.tsv", sep = "\t", header = TRUE)
 cute_gen <- read.table("inputs/cute_generations.tsv", sep = "\t", header = TRUE)
 sniff_gen <- read.table("inputs/sniffles_generations.tsv", sep = "\t", header = TRUE)
-generations <- rbind(delly_gen, smoove_gen, cute_gen, sniff_gen)
+generations <- rbind(delly_gen, mantaB_gen, smoove_gen, cute_gen, sniff_gen)
 ```
 
 As a start, we counted the number of SVs present within individual kākāpō, without considering genotype. That is to say, we counted presence/absence of SVs within individual kākāpō. This was done as reliably genotyping individuals can be challenging, and summary statistics for SVs (e.g., nucleotide diversity) have not yet been established.  
@@ -248,7 +248,7 @@ delly_vcf <- read.vcfR("inputs/pca/11_delly_genofilter_trio_target_samples.vcf")
 delly_genind <- vcfR2genind(delly_vcf)
 pop(delly_genind) <- as.factor(c("RH0", "RH2", "RH2", "RH1", "RH2", "RH1", "RH2", "RH1", "SI0", "SI1", "SI0", "SI1", "SI1", "SI2", "SI0", "SI0", "SI0", "SI0", "SI0", "SI0", "SI1", "SI1", "SI0", "SI0", "SI0", "SI1", "SI2", "SI1", "SI1", "SI1", "SI1", "SI1", "SI0", "SI0", "SI0", "SI1", "SI1", "SI0", "SI0", "SI1", "SI1", "SI1", "SI1", "SI1", "SI1", "SI1", "SI2", "SI1", "SI1", "SI1", "SI0", "SI1", "SI0", "SI0", "SI2", "SI1", "SI2", "SI1", "SI1", "SI1", "SI1", "SI0", "SI0", "SI0", "SI0", "SI0", "SI1", "SI1", "SI0", "SI1", "SI1", "SI0", "SI1", "SI1", "SI2", "SI1", "SI2", "SI0", "SI0", "SI0", "SI2", "SI1", "SI0", "SI1", "SI1", "SI1", "SI1", "SI1", "SI0", "SI1", "SI1", "SI1", "SI0", "SI0", "SI1", "SI0", "SI1", "SI0", "SI0", "SI1", "SI0", "SI0", "SI1", "SI1", "SI1", "SI1", "SI1", "SI1", "SI0", "SI1", "SI1", "SI2", "SI0", "SI1", "SI2", "SI1", "SI1"))
 
-mantaB_vcf <- read.vcfR("inputs/pca/mantaB_target_samples.vcf")
+mantaB_vcf <- read.vcfR("inputs/pca/11_mantaB_genofiltered_target_samples_trios.vcf")
 mantaB_genind <- vcfR2genind(mantaB_vcf)
 pop(mantaB_genind) <- delly_genind$pop
 
@@ -280,10 +280,12 @@ scatter(dapc.delly, col=transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.d
 assignplot(dapc.delly)
 dev.off()
 
+pdf("plots/Fig6_mantaB_DAPC.pdf")
 dapc.mantaB <- dapc(mantaB_genind, var.contrib = TRUE, scale = FALSE, n.pca = 40, n.da = nPop(mantaB_genind) -1)
 scatter(dapc.mantaB, col = transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.da = "bottomleft", posi.pca = "topleft", cell = 1.5, cex = 2, cstar = 0)
-perc.mantaB <- 100*dapc.mantaB$eig/sum(dapc.mantaB$eig)
+100*dapc.mantaB$eig/sum(dapc.mantaB$eig)
 assignplot(dapc.mantaB)
+dev.off()
 
 dapc.mantaJ <- dapc(mantaJ_genind, var.contrib = TRUE, scale = FALSE, n.pca = 40, n.da = nPop(mantaB_genind) -1)
 scatter(dapc.mantaJ, col = transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.da = "bottomleft", posi.pca = "topleft", cell = 1.5, cex = 2, cstar = 0)
