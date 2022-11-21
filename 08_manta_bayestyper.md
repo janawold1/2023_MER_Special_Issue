@@ -340,13 +340,6 @@ bcftools query \
 
 Found that 76 SVs don't overlap in the batch data and 126 SVs don't overlap in the joint data.  
 
-### Resolve SV type in non-overlapping sites
-
-We used `bcftools isec` to resolve the class of each SV present in genotyped output, but absent in the combined call set.  
-```
-
-```
-
 ### Annotate VCF with SV type  
 First prepare the annotation file by identifying the resolvable SVs and their types:
 ```
