@@ -216,10 +216,10 @@ As a start, we counted the number of SVs present within individual kākāpō, wi
 pdf("plots/Fig4_indiv_richness.pdf")
 ggplot(generations, aes(x=indiv, fill=SV_type)) +
   geom_histogram(alpha = 0.7, stat = 'count') +
-  labs(x = "Individual", y = "Strucgtural Variant Count", title = "Number of SVs carried by individual kākāpō") +
+  labs(x = "Individual", y = "Structural Variant Count", title = "Number of SVs carried by individual kākāpō") +
   theme_light() +
   facet_wrap(~data, scales = "free_y") +
-  scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CED38C", "Insertion" = "#DCC949", "Inversion" = "#BCA888")) +
+  scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CD8862", "Insertion" = "#BCA888", "Inversion" = "#DCC949")) +
   theme_light()
 dev.off()
 ```
