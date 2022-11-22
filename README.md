@@ -25,14 +25,18 @@ Called and genotyped SVs with the Smoove pipeline. [BCFtoools](http://samtools.g
 ## 7 Structural Variant discovery using the short-read discovery tool [Manta](https://github.com/Illumina/manta)
 Called SVs using two strategies 1) Joint and 2) Batched. [BCFtoools](http://samtools.github.io/bcftools/) was also used in this step.
 
-## 8 Structural variant discovery using the long-read discovery tools [CuteSV](https://github.com/tjiangHIT/cuteSV) and [Sniffles](https://github.com/fritzsedlazeck/Sniffles)
-After initial SV discovery, calls were refined using [Jasmine](https://github.com/mkirsche/Jasmine).
-
-## 9 Genotyping with [BayesTyper](https://github.com/bioinformatics-centre/BayesTyper)
+## 8 Genotyping with [BayesTyper](https://github.com/bioinformatics-centre/BayesTyper)
 Genotyped SVs using BayesTyper for both Joint and Batched Manta outputs. Other programs used included [BCFtoools](http://samtools.github.io/bcftools/) and [KMC](https://github.com/refresh-bio/KMC)
 
-## 10 Identified consensus SV calls
+
+## 9 Structural variant discovery using the long-read discovery tools [CuteSV](https://github.com/tjiangHIT/cuteSV) and [Sniffles](https://github.com/fritzsedlazeck/Sniffles)
+After initial SV discovery with either CuteSV or Sniffles, calls were refined using [Jasmine](https://github.com/mkirsche/Jasmine).
+
+## 10 Genotyping long-read SVs with [BayesTyper](https://github.com/bioinformatics-centre/BayesTyper)
+SVs called using the long-read data were genotyped using BayesTyper.  
+
+## 11 Identified consensus SV calls
 Identified overlapping SVs with [SURVIVOR](https://github.com/fritzsedlazeck/SURVIVOR). [BCFtoools](http://samtools.github.io/bcftools/) was also used in this step.
 
-## 11 Summarising SV characteristics
+## 12 Summarising SV characteristics
 Plotted SV size distributions, SV type frequency, relative frequency per individual taking into account generation and lineage and assessed population structure with principal component analyses.
