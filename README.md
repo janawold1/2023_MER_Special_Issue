@@ -11,10 +11,10 @@ All short read data were accessed through the kākāpō 125+ sequencing consorti
 Programs used [Mosdepth](https://github.com/brentp/mosdepth), [qualimap](http://qualimap.conesalab.org/) and [SAMtools](https://github.com/samtools/samtools). Summaries of these outputs were visualised using [MultiQC](https://github.com/ewels/MultiQC).
 
 ## 3 basecalling and read QC for ONT data
-Reads were basecalled using [Guppy]() under the `dna_r9.4.1_450bps_sup` basecalling model. Adapters were trimmed from raw sequence reads using [Porechop](https://github.com/rrwick/Porechop), lambda DNA removed using [NanoLyse](https://github.com/wdecoster/nanolyse) and filtered for a minimium Q-score of 10 and length of 5kb using [NanoFilt](https://github.com/wdecoster/nanofilt). Raw and filtered read quality were assessed using [NanoPlot](https://github.com/wdecoster/NanoPlot).
+Reads were basecalled using [Guppy]() under the `dna_r9.4.1_450bps_sup` basecalling model. Adapters were trimmed from raw sequence reads using [Porechop](https://github.com/rrwick/Porechop)v0.2.4, lambda DNA removed using [NanoLyse](https://github.com/wdecoster/nanolyse)v1.2.0 and filtered for a minimium Q-score of 10 and length of 5kb using [NanoFilt](https://github.com/wdecoster/nanofilt)v2.8.0. Raw and filtered read quality were assessed using [NanoPlot](https://github.com/wdecoster/NanoPlot).
 
 ## 4 ONT alignment and statistics
-Used [Winnowmap](https://github.com/marbl/Winnowmap)
+Reads were mapped using [Winnowmap](https://github.com/marbl/Winnowmap)v2.03, mapping quality was assessed using [qualimap](http://qualimap.conesalab.org/), [Mosdepth](https://github.com/brentp/mosdepth) and summaries visualised using [MultiQC](https://github.com/ewels/MultiQC).  
 
 ## 5 Structural Variant discovery using the short-read discovery tool [Delly](https://github.com/dellytools/delly)
 Called and genotyped SVs with Delly. [BCFtoools](http://samtools.github.io/bcftools/) was also used in this step.
