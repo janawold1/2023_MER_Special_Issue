@@ -403,37 +403,37 @@ bcftools +mendelian -m a -T ${trio} -O v -o ${out}bayestyper/batch_filtered/09_b
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0_fail_joint_manta_genofilter\n' \
-    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.05' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.05_fail_joint_manta_genofilter\n' \
-    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.1' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.1_fail_joint_manta_genofilter\n' \
-    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.2' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.2_fail_joint_manta_genofilter\n' \
-    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf
 
 
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0_fail_batch_manta_genofilter\n' \
-    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.05' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.05_fail_batch_manta_genofilter\n' \
-    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.1' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.1_fail_batch_manta_genofilter\n' \
-    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf
 
 bcftools query -i '(MERR / N_PASS(GT!="mis")) <=0.2' \
     -f '%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\t0.2_fail_batch_manta_genofilter\n' \
-    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf >> ${out}bayestyper/summary/manta_mendel.tsv
+    ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf
 ```
 ## Summarising the number of SVs carried by individuals
 Used for examining individual SV diversity and examining the 'absolute' number of SVs carried in each generation. That is the number of SVs detected, but not considering an individual's genotype. Therefore a genotype of 0/0 would not count as a SV carried by an individual. However, either a 0/1 or 1/1 would count as a single SV. This was done to try and examine whether generations differed prior to considering genotype, as population-scale genotyping remains a bioinformatic challege.
@@ -444,7 +444,7 @@ while read -r line
     indiv=$(echo $line | awk '{print $1}')
     gen=$(echo $line | awk '{print $2}')
     echo "Counting SVs for $indiv..."
-    bcftools view -s ${indiv} ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf | bcftools query -i 'GT!= "RR" & GT!="mis"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\n' | awk -v var="$gen" '{print $0"\t"var}' >> ${out}bayestyper/summary/manta_batch_generations.tsv
-    bcftools view -s ${indiv} ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf | bcftools query -i 'GT!= "RR" & GT!="mis"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\n' | awk -v var="$gen" '{print $0"\t"var}' >> ${out}bayestyper/summary/manta_joint_generations.tsv
+    bcftools view -s ${indiv} ${out}bayestyper/batch_filtered/09_batch_annotated_trios.vcf | bcftools query -i 'GT!= "RR" & GT!="mis"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\n' | awk -v var="$gen" '{print $0"\t"var"\tmantaB"}' >> ${out}bayestyper/summary/manta_batch_generations.tsv
+    bcftools view -s ${indiv} ${out}bayestyper/joint_filtered/09_joint_annotated_trios.vcf | bcftools query -i 'GT!= "RR" & GT!="mis"' -f '[%SAMPLE]\t%CHROM\t%POS\t%END\t%SVLEN\t%SVTYPE\n' | awk -v var="$gen" '{print $0"\t"var"\tmantaJ"}' >> ${out}bayestyper/summary/manta_joint_generations.tsv
 done < /kakapo-data/metadata/generations.tsv
 ```
