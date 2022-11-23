@@ -118,8 +118,8 @@ filtered$size <- as.numeric(filtered$size)
 filtered$logsize <- log(filtered$size)
 head(filtered)
 filtered %>%
-  filter(if_any(data, ~grepl('smoove' , .))) %>%
-  filter(if_any(SV_type, ~grepl('Duplication' , .))) %>%
+  filter(if_any(data, ~grepl('delly' , .))) %>%
+  filter(if_any(SV_type, ~grepl('Inversion' , .))) %>%
   summary()
 ```
 Here, we compared the size distribution of SVs called by all three tools. Due to the experimental set up violating many assumptions of independence, comparisons of variance between the tools were not made. Instead differences are in the context of means. Given the highly skewed size distribution across SV types in all data sets, the natural log of SV size was used to graph the size distribution and estimate the geometric mean.
@@ -204,11 +204,11 @@ Here we explore the differences in the diversity of SV types across individual k
 ```{r Individual Data, echo=FALSE, fig.align='center'}
 delly_gen <- read.table("inputs/delly_generations.tsv", sep = "\t", header = TRUE)
 mantaB_gen <- read.table("inputs/mantaB_generations.tsv", sep = "\t", header = TRUE)
-#mantaJ_gen <- read.table("inputs/mantaJ_generations.tsv", sep = "\t", header = TRUE)
+mantaJ_gen <- read.table("inputs/mantaJ_generations.tsv", sep = "\t", header = TRUE)
 smoove_gen <- read.table("inputs/smoove_generations.tsv", sep = "\t", header = TRUE)
 cute_gen <- read.table("inputs/cute_generations.tsv", sep = "\t", header = TRUE)
 sniff_gen <- read.table("inputs/sniffles_generations.tsv", sep = "\t", header = TRUE)
-generations <- rbind(delly_gen, mantaB_gen, smoove_gen, cute_gen, sniff_gen)
+generations <- rbind(delly_gen, mantaB_gen, mantaJ_gen, smoove_gen, cute_gen, sniff_gen)
 ```
 
 As a start, we counted the number of SVs present within individual kākāpō, without considering genotype. That is to say, we counted presence/absence of SVs within individual kākāpō. This was done as reliably genotyping individuals can be challenging, and summary statistics for SVs (e.g., nucleotide diversity) have not yet been established.  
@@ -216,10 +216,10 @@ As a start, we counted the number of SVs present within individual kākāpō, wi
 pdf("plots/Fig4_indiv_richness.pdf")
 ggplot(generations, aes(x=indiv, fill=SV_type)) +
   geom_histogram(alpha = 0.7, stat = 'count') +
-  labs(x = "Individual", y = "Strucgtural Variant Count", title = "Number of SVs carried by individual kākāpō") +
+  labs(x = "Individual", y = "Structural Variant Count", title = "Number of SVs carried by individual kākāpō") +
   theme_light() +
   facet_wrap(~data, scales = "free_y") +
-  scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CED38C", "Insertion" = "#DCC949", "Inversion" = "#BCA888")) +
+  scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CD8862", "Insertion" = "#BCA888", "Inversion" = "#DCC949")) +
   theme_light()
 dev.off()
 ```
@@ -252,9 +252,9 @@ mantaB_vcf <- read.vcfR("inputs/pca/11_mantaB_genofiltered_target_samples_trios.
 mantaB_genind <- vcfR2genind(mantaB_vcf)
 pop(mantaB_genind) <- delly_genind$pop
 
-#mantaJ_vcf <- read.vcfR("inputs/pca/")
-#mantaJ_genind <- vcfR2genind(mantaJ_vcf)
-#pop(mantaJ_genind) <- delly_genind$pop
+mantaJ_vcf <- read.vcfR("inputs/pca/12_mantaJ_genofiltered_trios_target_samples.vcf")
+mantaJ_genind <- vcfR2genind(mantaJ_vcf)
+pop(mantaJ_genind) <- delly_genind$pop
 
 smoove_vcf <- read.vcfR("inputs/pca/06_smoove_genofilter_trio_target_samples.vcf")
 smoove_genind <- vcfR2genind(smoove_vcf)
@@ -287,10 +287,12 @@ scatter(dapc.mantaB, col = transp(myPal), scree.da = TRUE, scree.pca = TRUE, pos
 assignplot(dapc.mantaB)
 dev.off()
 
-dapc.mantaJ <- dapc(mantaJ_genind, var.contrib = TRUE, scale = FALSE, n.pca = 40, n.da = nPop(mantaB_genind) -1)
+pdf("plots/Fig6_mantaJ_DAPC.pdf")
+dapc.mantaJ <- dapc(mantaJ_genind, var.contrib = TRUE, scale = FALSE, n.pca = 40, n.da = nPop(mantaJ_genind) -1)
 scatter(dapc.mantaJ, col = transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.da = "bottomleft", posi.pca = "topleft", cell = 1.5, cex = 2, cstar = 0)
 perc.mantaJ <- 100*dapc.mantaJ$eig/sum(dapc.mantaJ$eig)
 assignplot(dapc.mantaJ)
+dev.off()
 
 pdf("plots/Fig6_smoove_DAPC.pdf")
 dapc.smoove <- dapc(smoove_genind, var.contrib = TRUE, scale = FALSE, n.pca = 40, n.da = nPop(smoove_genind) -1)
