@@ -368,12 +368,12 @@ tabix -s1 -b2 -e2 batch_conversion.gz
 tabix -s1 -b2 -e2 joint_conversion.gz
 
 bcftools annotate -a batch_conversion.gz -h annots.hdr \
-    -c CHROM,POS,SVTYPE,SVLEN -O v -o 09_batch_annotated.vcf \
-    ${out}bayestyper/batch_filtered/07_batch_filtered_genotypes.vcf
+    -c CHROM,POS,SVTYPE,SVLEN -O v -o 09_mantaB_annotated.vcf \
+    ${out}bayestyper/batch_filtered/08_mantaB_raw_genotypes.vcf
 
 bcftools annotate -a joint_conversion.gz -h annots.hdr \
-    -c CHROM,POS,SVTYPE,SVLEN -O v -o 09_joint_annotated.vcf \
-    ${out}bayestyper/joint_filtered/07_joint_filtered_genotypes.vcf
+    -c CHROM,POS,SVTYPE,SVLEN -O v -o 09_mantaB_annotated.vcf \
+    ${out}bayestyper/joint_filtered/08_mantaB_raw_genotypes.vcf
 ```
 
 ## Genotype quality filtering
