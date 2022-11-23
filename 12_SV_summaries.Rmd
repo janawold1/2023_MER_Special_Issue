@@ -118,8 +118,8 @@ filtered$size <- as.numeric(filtered$size)
 filtered$logsize <- log(filtered$size)
 head(filtered)
 filtered %>%
-  filter(if_any(data, ~grepl('smoove' , .))) %>%
-  filter(if_any(SV_type, ~grepl('Duplication' , .))) %>%
+  filter(if_any(data, ~grepl('delly' , .))) %>%
+  filter(if_any(SV_type, ~grepl('Inversion' , .))) %>%
   summary()
 ```
 Here, we compared the size distribution of SVs called by all three tools. Due to the experimental set up violating many assumptions of independence, comparisons of variance between the tools were not made. Instead differences are in the context of means. Given the highly skewed size distribution across SV types in all data sets, the natural log of SV size was used to graph the size distribution and estimate the geometric mean.
