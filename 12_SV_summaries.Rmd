@@ -53,14 +53,15 @@ The below plots were used to generate Figure 1 (SV filter overlaps) and Figure 2
 delly <-read.table("inputs/delly_summary.tsv", sep = "\t", header = TRUE)
 manta <-read.table("inputs/manta_summary.tsv", sep = "\t", header = TRUE)
 smoove <-read.table("inputs/smoove_summary.tsv", sep = "\t", header = TRUE)
-cute  <- read.table("inputs/cute_summary.tsv", sep = "\t", header = TRUE)
-sniff <- read.table("inputs/sniffles_summary.tsv", sep = "\t", header = TRUE)
-svs <- rbind(delly, manta, smoove, cute, sniff)
+long_reads  <- read.table("inputs/long-read_summary.tsv", sep = "\t", header = TRUE)
+svs <- rbind(delly, manta, smoove, long_reads)
 
 unfiltered <- svs %>%
                 filter(if_any(data, ~grepl('unfiltered' , .)))
 filtered <- svs %>%
                 filter(if_any(data, ~grepl('SVfiltered' , .)))
+genofiltered <- svs %>%
+                filter(if_any(data, ~grepl('genofiltered' , .)))
 ```
 
 The overall type counts were then visualised for both the filtered and unfiltered data sets.
@@ -76,6 +77,12 @@ ggplot(filtered, aes(x=SV_type, fill=data)) +
   geom_histogram(stat = "count", position = position_dodge()) +
   labs(x = "Structural Variant Type", y = "Count", title = "Count of Filtered Structural Variants") +
   scale_fill_manual(values = c("delly_SVfiltered" = "#7D9D33", "mantaB_SVfiltered" = "#CED38C", "mantaJ_SVfiltered" = "#DCC949", "smoove_SVfiltered" = "#BCA888", "cuteSV_SVfiltered" = "#CD8862", "sniffles_SVfiltered" = "#775B24")) +
+  theme_light()
+
+ggplot(genofiltered, aes(x=SV_type, fill=data)) +
+  geom_histogram(stat = "count", position = position_dodge()) +
+  labs(x = "Structural Variant Type", y = "Count", title = "Count of Structural Variants passing genotype filtering thresholds") +
+  scale_fill_manual(values = c("delly_genofiltered" = "#7D9D33", "mantaB_genofiltered" = "#CED38C", "mantaJ_genofiltered" = "#DCC949", "smoove_genofiltered" = "#BCA888", "cuteSV_genofiltered" = "#CD8862", "sniffles_genofiltered" = "#775B24")) +
   theme_light()
 
 #pdf("plots/Fig1_total_counts.pdf")
@@ -112,8 +119,8 @@ ggplot(overlaps_50bp, aes(x = reorder(combination, total), y = total)) +
 ```
 
 ## Size Distributions
-
-```{r size summaries, echo=FALSE, fig.align = 'center'}
+First we assess the characteristics of the SVs filtered for call quality (Tables 1 & 2).
+```{r SVfiltered size summaries, echo=FALSE, fig.align = 'center'}
 filtered$size <- as.numeric(filtered$size)
 filtered$logsize <- log(filtered$size)
 head(filtered)
@@ -122,8 +129,19 @@ filtered %>%
   filter(if_any(SV_type, ~grepl('Inversion' , .))) %>%
   summary()
 ```
+Then we assessed the characteristics of the SVs filtered for genotype quality (Table 1 and Supp Table 1).
+```{r size summaries, echo=FALSE, fig.align = 'center'}
+genofiltered$size <- as.numeric(genofiltered$size)
+genofiltered$logsize <- log(genofiltered$size)
+head(genofiltered)
+genofiltered %>%
+  filter(if_any(data, ~grepl('sniffles' , .))) %>%
+  filter(if_any(SV_type, ~grepl('Deletion' , .))) %>%
+  summary()
+```
+
 Here, we compared the size distribution of SVs called by all three tools. Due to the experimental set up violating many assumptions of independence, comparisons of variance between the tools were not made. Instead differences are in the context of means. Given the highly skewed size distribution across SV types in all data sets, the natural log of SV size was used to graph the size distribution and estimate the geometric mean.
-```{r size distribution, echo=FALSE, fig.align='center'}
+```{r size distribution, echo=FALSE, fig.align='center', fig.width=4}
 # Not transformed
 ggplot(filtered, aes(x=size, fill=data)) +
   geom_density(alpha = 0.7) +
@@ -134,33 +152,34 @@ ggplot(filtered, aes(x=size, fill=data)) +
   scale_fill_manual(values = c("delly_SVfiltered" = "#7D9D33", "mantaB_SVfiltered" = "#CED38C", "mantaJ_SVfiltered" = "#DCC949", "smoove_SVfiltered" = "#BCA888", "cuteSV_SVfiltered" = "#CD8862", "sniffles_SVfiltered" = "#775B24")) +
   theme_light()
 
-ggplot(filtered, aes(x=size, fill=data)) +
-  geom_histogram(alpha = 0.7, position = "dodge") +
+ggplot(genofiltered, aes(x=size, fill=data)) +
+  geom_density(alpha = 0.7) +
   xlim(0,10000) +
   labs(x = "Structural Variant Size", y = "Proportion", title = "Size Distribution of Filtered Structural Variants") +
   theme_light() +
   facet_wrap(~SV_type, scales = "free_y") +
-  scale_fill_manual(values = c("delly_SVfiltered" = "#7D9D33", "mantaB_SVfiltered" = "#CED38C", "mantaJ_SVfiltered" = "#DCC949", "smoove_SVfiltered" = "#BCA888", "cuteSV_SVfiltered" = "#CD8862", "sniffles_SVfiltered" = "#775B24")) +
+  scale_fill_manual(values = c("delly_genofiltered" = "#7D9D33", "mantaB_genofiltered" = "#CED38C", "mantaJ_genofiltered" = "#DCC949", "smoove_genofiltered" = "#BCA888", "cuteSV_genofiltered" = "#CD8862", "sniffles_genofiltered" = "#775B24")) +
   theme_light()
 
 # Size transformed
-png("plots/Size_distributions.png")
+png("plots/SVfiltered_size_distributions.png")
 ggplot(filtered, aes(x=logsize, fill=data)) +
   geom_density(alpha = 0.5) +
-  labs(x = "Structural Variant Size", y = "Proportion", title = "Size Distribution of Filtered Structural Variants") +
+  labs(x = "Structural Variant Size", y = "Proportion", title = "Size distribution of filtered structural variants") +
   theme_light() +
   facet_wrap(~SV_type, scales = "free_y") +
   scale_fill_manual(values = c("delly_SVfiltered" = "#7D9D33", "mantaB_SVfiltered" = "#CED38C", "mantaJ_SVfiltered" = "#DCC949", "smoove_SVfiltered" = "#BCA888", "cuteSV_SVfiltered" = "#CD8862", "sniffles_SVfiltered" = "#775B24")) +
   theme_light()
 dev.off()
-
-ggplot(filtered, aes(x=logsize, fill=data)) +
-  geom_histogram(alpha = 0.7, position = "dodge") +
-  labs(x = "Structural Variant Size", y = "Proportion", title = "Size Distribution of Filtered Structural Variants") +
+png("plots/genofiltered_size_distributions.png")
+ggplot(genofiltered, aes(x=logsize, fill=data)) +
+  geom_density(alpha = 0.5) +
+  labs(x = "Structural Variant Size", y = "Proportion", title = "Size distribution of structural variants filtered for genotype quality") +
   theme_light() +
   facet_wrap(~SV_type, scales = "free_y") +
-  scale_fill_manual(values = c("delly_SVfiltered" = "#7D9D33", "mantaB_SVfiltered" = "#CED38C", "mantaJ_SVfiltered" = "#DCC949", "smoove_SVfiltered" = "#BCA888", "cuteSV_SVfiltered" = "#CD8862", "sniffles_SVfiltered" = "#775B24")) +
+  scale_fill_manual(values = c("delly_genofiltered" = "#7D9D33", "mantaB_genofiltered" = "#CED38C", "mantaJ_genofiltered" = "#DCC949", "smoove_genofiltered" = "#BCA888", "cuteSV_genofiltered" = "#CD8862", "sniffles_genofiltered" = "#775B24")) +
   theme_light()
+dev.off()
 ```
 ## Chromosome Diversity
 Variability in chromosome 'richness' SV counts and the relative proportion of each chromosome impacted by SVs were then assessed.
