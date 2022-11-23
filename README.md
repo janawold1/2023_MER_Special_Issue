@@ -29,7 +29,7 @@ Called SVs using two strategies 1) Joint and 2) Batched. [BCFtoools](http://samt
 Genotyped SVs using BayesTyper for both Joint and Batched Manta outputs. Other programs used included [BCFtoools](http://samtools.github.io/bcftools/) and [KMC](https://github.com/refresh-bio/KMC)
 
 ### 9 Structural variant discovery using the long-read discovery tools [CuteSV](https://github.com/tjiangHIT/cuteSV) and [Sniffles](https://github.com/fritzsedlazeck/Sniffles)
-After initial SV discovery with either CuteSV or Sniffles, calls were refined using [Jasmine](https://github.com/mkirsche/Jasmine).
+After initial SV discovery with either CuteSV v1.0.11 or Sniffles v2.0.7, calls were refined using [Jasmine](https://github.com/mkirsche/Jasmine)v1.1.5.
 
 ### 10 Genotyping long-read SVs with [BayesTyper](https://github.com/bioinformatics-centre/BayesTyper)
 SVs called using the long-read data were genotyped using BayesTyper.  
