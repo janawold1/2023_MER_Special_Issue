@@ -134,7 +134,7 @@ jasmine --dup_to_ins file_list=${snif}02_jasmine_raw.vcf --comma_filelist out_fi
 ```
 Unfortunately, the long-read data assessed here varied widely from 5x - 12x coverage for autosomal scaffolds. A minimum depth of 20x would have been ideal.
 
-The low sequence depth of our samples makes is somewhat challenging to curate high quality calls with the jasmine pipeline. This is due to the recommended minimum number of reads a variant needs to pass (```spec_reads```) is about 25% of the average coverage, which would place some samples < 2x coverage to call a high-quality variant. To conservatively call SVs, the default minimum ```spec_reads``` of 10 was used for all 7 samples included here.
+The low sequence depth of our samples makes it somewhat challenging to curate high quality calls with the jasmine pipeline. This is due to the recommended minimum number of reads a variant needs to pass (`spec_reads`) is about 25% of the average coverage, which would place some samples < 2x coverage to call a high-quality variant. To conservatively call SVs, the default minimum `spec_reads` of 10 was used for all 7 samples included here.
 
 Finally, low-confidence / imprecise call were removed. Notably, could not filter for `IS_SPECIFIC` in Sniffles calls as no SVs remained for comparisons.
 ```
@@ -154,4 +154,4 @@ bcftools view -e 'SVTYPE="TRA"' -O v -o ${cute}06_filtered_noTRAV.vcf ${cute}05_
 bcftools norm --check-ref s -D -f ${ref} -O v -o ${snif}07_paragraph_candidates.vcf ${snif}06_filtered_noTRAV.vcf
 bcftools norm --check-ref s -D -f ${ref} -O v -o ${cute}07_paragraph_candidates.vcf ${cute}06_filtered_noTRAV.vcf
 ```
-This VCF was used to estimate the number of SVs that passed filtering thresholds. However, not all of these SVs are compatible with the genotyping tools used here. More details are provided in the relevant Markdown files.
+This VCF was used to estimate the number of SVs that passed filtering thresholds. However, not all of these SVs are compatible with the genotyping tools used here. More details are provided in the relevant Markdown files.  
