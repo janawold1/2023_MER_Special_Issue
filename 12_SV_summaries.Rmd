@@ -186,7 +186,7 @@ Variability in chromosome 'richness' SV counts and the relative proportion of ea
 
 ```{r Chromosome Comparisons, echo=FALSE, fig.align='center'}
 filtered$proportion <- filtered$size / filtered$chrom_size
-
+genofiltered$proportion <- genofiltered$size / genofiltered$chrom_size
 # The absolute count of unfiltered SVs per chromosome
 ggplot(unfiltered, aes(x = chrom, fill = SV_type)) + 
   geom_histogram(stat = "count", position = "stack") +
@@ -214,6 +214,24 @@ filtered %>%
   theme_light() +
   facet_wrap(~data, scales = "free_y") +
   ylim(0, 0.095) +
+  scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CD8862", "Insertion" = "#BCA888", "Inversion" = "#DCC949"))
+dev.off()
+
+png("plots/Supplemental_2a.png")
+ggplot(genofiltered, aes(x = chrom, fill = SV_type)) + 
+  geom_histogram(stat = "count", position = "stack") +
+  labs(x = "Chromosome", y = "Count", title = "Number of SVs Filtered for Genotype Quality per Chromosome") +
+  theme_light() + 
+  facet_wrap(~data, scales = "free_y") +
+  scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CD8862", "Insertion" = "#BCA888", "Inversion" = "#DCC949"))
+dev.off()
+png("plots/Supplemental_2b.png")
+genofiltered %>%
+  ggplot(aes(x = chrom, y = proportion, fill = SV_type)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(x = "Chromosome", y = "Proportion of impacted base pairs", title = "Proportion of Chromosome Impacted by SVs Filtered for Genotype Quality") +
+  theme_light() +
+  facet_wrap(~data, scales = "free_y") +
   scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CD8862", "Insertion" = "#BCA888", "Inversion" = "#DCC949"))
 dev.off()
 ```
