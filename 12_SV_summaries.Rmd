@@ -352,3 +352,75 @@ scatter(dapc.sniff, col=transp(myPal), scree.da = TRUE, scree.pca = TRUE, posi.d
 assignplot(dapc.sniff)
 dev.off()
 ```
+
+# Response to Reviewer 1 Recommendations
+Reviewer 1 had some recommendations to improve Figure 5. This included transforming the SV counts per individual in each generation and lineage (e.g., log, ln, sqrt) and graphing dot plots representing the mean/median, alonside trendlines overtime. It was also suggested that the two linages were represented in their own panels, but all 6 data sets graphed simultaneously.
+Our attempt to incorporate these recommendations is below. 
+
+```{r generations_2, echo=FALSE, fig.align='center'}
+gen_counts <- generations %>% count(indiv, gen, data)
+gen_counts$log_counts <- log(gen_counts$n)
+gen_counts$log10_counts <- log10(gen_counts$n)
+gen_counts$sqrt_counts <- sqrt(gen_counts$n)
+```
+
+This successfully transformed the data. However, plotting a trendline requires numeric rather than categorical variables (RH0, RH1, RH2, SI0...). To fix this, we added a new column denoting the lineage (Rakiura or Fiordland), and numbered generations from 1 to 3 as per below.
+```{r fixing table, echo=FALSE, fig.align='center'}
+rakiura_gen_counts <- gen_counts %>% filter(if_any(gen, ~grepl('SI' , .))) %>%
+  mutate(gen = replace(gen, gen == "SI0", 1)) %>%
+  mutate(gen = replace(gen, gen == "SI1", 2)) %>%
+  mutate(gen = replace(gen, gen == "SI2", 3))
+rakiura_gen_counts$lineage <- "Rakiura"
+
+fiordland_gen_counts <- gen_counts %>% filter(if_any(gen, ~grepl('RH' , .))) %>%
+  mutate(gen = replace(gen, gen == "RH0", 1)) %>%
+  mutate(gen = replace(gen, gen == "RH1", 2)) %>%
+  mutate(gen = replace(gen, gen == "RH2", 3))
+fiordland_gen_counts$lineage <- "Fiordland"
+
+pdf("plots/Fig5.2_generation_counts.pdf")
+rakiura_gen_counts %>% 
+  group_by(data, gen) %>%
+  summarise(mean_log = mean(log_counts)) %>%
+  ggplot(aes(x=gen, y=mean_log, color = data)) +
+    geom_point(size = 3) +
+    ylim(1.75, 7) +
+    scale_color_manual(values = c("Delly" = "#7D9D33", "mantaB" = "#CED38C", "mantaJ" = "#DCC949", "Smoove" = "#BCA888", "CuteSV" = "#CD8862", "Sniffles" = "#775B24")) +
+    geom_smooth(aes(x = as.numeric(gen)), method = 'lm', se = FALSE) +
+    labs(x = "Generations", y = "Mean Structural Variant Count (log transformed)", title = "Number of SVs carried by individual kākāpō of Rakiura lineage", color = "Data Set") +
+    theme_light()
+
+rakiura_gen_counts %>% 
+  group_by(data, gen) %>%
+  summarise(median_log = median(log_counts)) %>%
+  ggplot(aes(x=gen, y=median_log, color = data)) +
+    geom_point(size = 3) +
+    ylim(1.75, 7) +
+    scale_color_manual(values = c("Delly" = "#7D9D33", "mantaB" = "#CED38C", "mantaJ" = "#DCC949", "Smoove" = "#BCA888", "CuteSV" = "#CD8862", "Sniffles" = "#775B24")) +
+    geom_smooth(aes(x = as.numeric(gen)), method = 'lm', se = FALSE) +
+    labs(x = "Generations", y = "Median Structural Variant Count (log transformed)", title = "Number of SVs carried by individual kākāpō of Rakiura lineage", color = "Data Set") +
+    theme_light()
+
+fiordland_gen_counts %>% 
+  group_by(data, gen) %>%
+  summarise(mean_log = mean(log_counts)) %>%
+  ggplot(aes(x=gen, y=mean_log, color = data)) +
+    geom_point(size = 3) +
+    ylim(1.75, 7) +
+    scale_color_manual(values = c("Delly" = "#7D9D33", "mantaB" = "#CED38C", "mantaJ" = "#DCC949", "Smoove" = "#BCA888", "CuteSV" = "#CD8862", "Sniffles" = "#775B24")) +
+    geom_smooth(aes(x = as.numeric(gen)), method = 'lm', se = FALSE) +
+    labs(x = "Generations", y = "Mean Structural Variant Count (log transformed)", title = "Number of SVs carried by individual kākāpō of Fiordland lineage", color = "Data Set") +
+    theme_light()
+
+fiordland_gen_counts %>% 
+  group_by(data, gen) %>%
+  summarise(median_log = median(log_counts)) %>%
+  ggplot(aes(x=gen, y=median_log, color = data)) +
+    geom_point(size = 3) +
+    ylim(1.75, 7) +
+    scale_color_manual(values = c("Delly" = "#7D9D33", "mantaB" = "#CED38C", "mantaJ" = "#DCC949", "Smoove" = "#BCA888", "CuteSV" = "#CD8862", "Sniffles" = "#775B24")) +
+    geom_smooth(aes(x = as.numeric(gen)), method = 'lm', se = FALSE) +
+    labs(x = "Generations", y = "Median Structural Variant Count (log transformed)", title = "Number of SVs carried by individual kākāpō of Fiordland lineage", color = "Data Set") +
+    theme_light()
+dev.off()
+```
