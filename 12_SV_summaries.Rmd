@@ -162,7 +162,7 @@ ggplot(genofiltered, aes(x=size, fill=data)) +
   theme_light()
 
 # Size transformed
-png("plots/SVfiltered_size_distributions.png")
+png("plots/SVfiltered_size_distributions.png",  width = 6, height = 6, units = "in", res = 1200)
 ggplot(filtered, aes(x=logsize, fill=data)) +
   geom_density(alpha = 0.5) +
   labs(x = "Structural Variant Size", y = "Proportion", title = "Size distribution of filtered structural variants") +
@@ -171,7 +171,7 @@ ggplot(filtered, aes(x=logsize, fill=data)) +
   scale_fill_manual(values = c("delly_SVfiltered" = "#7D9D33", "mantaB_SVfiltered" = "#CED38C", "mantaJ_SVfiltered" = "#DCC949", "smoove_SVfiltered" = "#BCA888", "cuteSV_SVfiltered" = "#CD8862", "sniffles_SVfiltered" = "#775B24")) +
   theme_light()
 dev.off()
-png("plots/genofiltered_size_distributions.png")
+png("plots/genofiltered_size_distributions.png",  width = 6, height = 6, units = "in", res = 1200)
 ggplot(genofiltered, aes(x=logsize, fill=data)) +
   geom_density(alpha = 0.5) +
   labs(x = "Structural Variant Size", y = "Proportion", title = "Size distribution of structural variants filtered for genotype quality") +
@@ -217,7 +217,7 @@ filtered %>%
   scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CD8862", "Insertion" = "#BCA888", "Inversion" = "#DCC949"))
 dev.off()
 
-png("plots/Supplemental_2a.png")
+png("plots/Supplemental_2a.png",  width = 6, height = 6, units = "in", res = 1200)
 ggplot(genofiltered, aes(x = chrom, fill = SV_type)) + 
   geom_histogram(stat = "count", position = "stack") +
   labs(x = "Chromosome", y = "Count", title = "Number of SVs Filtered for Genotype Quality per Chromosome") +
@@ -225,7 +225,7 @@ ggplot(genofiltered, aes(x = chrom, fill = SV_type)) +
   facet_wrap(~data, scales = "free_y") +
   scale_fill_manual(values = c("Deletion" = "#7D9D33", "Duplication" = "#CD8862", "Insertion" = "#BCA888", "Inversion" = "#DCC949"))
 dev.off()
-png("plots/Supplemental_2b.png")
+png("plots/Supplemental_2b.png",  width = 6, height = 6, units = "in", res = 1200)
 genofiltered %>%
   ggplot(aes(x = chrom, y = proportion, fill = SV_type)) +
   geom_bar(stat = "identity", position = "stack") +
@@ -442,8 +442,8 @@ depth_SVs <- merge(mean_depth, SV_chars)
 ```
 This new object contains information on the individual, chromosome, chromosome depth, sex, SV starting and ending positions, SV size, SV type, individual generation and data set.
 Correlations were examined on the whole. 
-```{r mean depth and SV count, echo=FALSE, fig.align='center'}
-png("plots/Supplemental_depth_counts.png")
+```{r mean depth and SV count, echo=FALSE, fig.dim = c(6,6), fig.align='center'}
+png("plots/Supplemental_depth_counts.png", width = 6, height = 6, units = "in", res = 1200)
 depth_SVs %>%
   ggplot(aes(x = mean_depth, y = n, color = data)) +
     geom_point(size = 2) +
