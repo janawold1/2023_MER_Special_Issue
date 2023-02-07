@@ -439,13 +439,24 @@ SV_chars <- generations[c("indiv", "data")] %>%
               na.omit()
 
 depth_SVs <- merge(mean_depth, SV_chars)
+depth_SVs$log_counts <-log(depth_SVs$n)
 ```
 This new object contains information on the individual, chromosome, chromosome depth, sex, SV starting and ending positions, SV size, SV type, individual generation and data set.
 Correlations were examined on the whole. 
 ```{r mean depth and SV count, echo=FALSE, fig.dim = c(6,6), fig.align='center'}
-png("plots/Supplemental_depth_counts.png", width = 6, height = 6, units = "in", res = 1200)
+#png("plots/Supplemental_depth_counts.png", width = 6, height = 6, units = "in", res = 1200)
 depth_SVs %>%
   ggplot(aes(x = mean_depth, y = n, color = data)) +
+    geom_point(size = 2) +
+    scale_color_manual(values = c("Delly" = "#7D9D33", "mantaB" = "#CED38C", "mantaJ" = "#DCC949", "Smoove" = "#BCA888", "CuteSV" = "#CD8862", "Sniffles" = "#775B24")) +
+    geom_smooth(aes(x = as.numeric(mean_depth)), method = 'lm', se = FALSE) +
+    labs(x = "Mean Individual Depth", y = "Number of SVs", title = "Number of SVs carried by individual kākāpō per Mean Depth", color = "Data Set") +
+    theme_light()
+#dev.off()
+
+png("plots/Supplemental_depth_log(counts).png", width = 6, height = 6, units = "in", res = 1200)
+depth_SVs %>%
+  ggplot(aes(x = mean_depth, y = log_counts, color = data)) +
     geom_point(size = 2) +
     scale_color_manual(values = c("Delly" = "#7D9D33", "mantaB" = "#CED38C", "mantaJ" = "#DCC949", "Smoove" = "#BCA888", "CuteSV" = "#CD8862", "Sniffles" = "#775B24")) +
     geom_smooth(aes(x = as.numeric(mean_depth)), method = 'lm', se = FALSE) +
