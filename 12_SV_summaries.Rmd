@@ -367,6 +367,14 @@ gen_counts$sqrt_counts <- sqrt(gen_counts$n)
 
 This successfully transformed the data. However, plotting a trendline requires numeric rather than categorical variables (RH0, RH1, RH2, SI0...). To fix this, we added a new column denoting the lineage (Rakiura or Fiordland), and numbered generations from 1 to 3 as per below.
 ```{r fixing table, echo=FALSE, fig.align='center'}
+gen_count2 <- gen_counts %>% 
+  mutate(gen = replace(gen, gen == "SI0", "F0")) %>%
+  mutate(gen = replace(gen, gen == "RH0", "F0")) %>%
+  mutate(gen = replace(gen, gen == "SI1", "F1")) %>%
+  mutate(gen = replace(gen, gen == "RH1", "F1")) %>%
+  mutate(gen = replace(gen, gen == "SI2", "F2")) %>%
+  mutate(gen = replace(gen, gen == "RH2", "F2"))
+
 rakiura_gen_counts <- gen_counts %>% filter(if_any(gen, ~grepl('SI' , .))) %>%
   mutate(gen = replace(gen, gen == "SI0", 1)) %>%
   mutate(gen = replace(gen, gen == "SI1", 2)) %>%
@@ -379,8 +387,8 @@ fiordland_gen_counts <- gen_counts %>% filter(if_any(gen, ~grepl('RH' , .))) %>%
   mutate(gen = replace(gen, gen == "RH2", 3))
 fiordland_gen_counts$lineage <- "Fiordland"
 
-pdf("plots/Fig5.2_generation_counts.pdf")
-rakiura_gen_counts %>% 
+pdf("plots/Fig5_generation_counts.pdf")
+gen_count2 %>% 
   group_by(data, gen) %>%
   summarise(mean_log = mean(log_counts)) %>%
   ggplot(aes(x=gen, y=mean_log, color = data)) +
@@ -390,6 +398,7 @@ rakiura_gen_counts %>%
     geom_smooth(aes(x = as.numeric(gen)), method = 'lm', se = FALSE) +
     labs(x = "Generations", y = "Mean Structural Variant Count (log transformed)", title = "Number of SVs carried by individual kākāpō of Rakiura lineage", color = "Data Set") +
     theme_light()
+dev.off()
 
 rakiura_gen_counts %>% 
   group_by(data, gen) %>%
@@ -423,7 +432,6 @@ fiordland_gen_counts %>%
     geom_smooth(aes(x = as.numeric(gen)), method = 'lm', se = FALSE) +
     labs(x = "Generations", y = "Median Structural Variant Count (log transformed)", title = "Number of SVs carried by individual kākāpō of Fiordland lineage", color = "Data Set") +
     theme_light()
-dev.off()
 ```
 ## Correlation between depth and SV count
 Another question posed by Reviewer 1 was around whether we had investigated the relationship between individual depth and the number of SVs called/genotyped. We had previously examined this, but repeated a more thorough investigation as per below.
