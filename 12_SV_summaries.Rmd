@@ -446,29 +446,61 @@ SV_chars <- generations[c("indiv", "data")] %>%
               count(indiv, data) %>%
               na.omit()
 
+gen_info <- generations[c("indiv", "gen")] %>% unique()
+
 depth_SVs <- merge(mean_depth, SV_chars)
 depth_SVs$log_counts <-log(depth_SVs$n)
-```
+gen_depth_SVs <- merge(depth_SVs, gen_info)
+summary(gen_depth_SVs)
+gen_depth_SVs %>%
+  filter(if_any(gen, ~grepl('RH' , .))) %>%
+  summary()
+
+gen_depth_SVs %>%
+  filter(if_any(gen, ~grepl('SI0' , .))) %>%
+  summary()
+S```
 This new object contains information on the individual, chromosome, chromosome depth, sex, SV starting and ending positions, SV size, SV type, individual generation and data set.
 Correlations were examined on the whole. 
 ```{r mean depth and SV count, echo=FALSE, fig.dim = c(6,6), fig.align='center'}
-#png("plots/Supplemental_depth_counts.png", width = 6, height = 6, units = "in", res = 1200)
+png("plots/Supplemental_Total_depth_counts.png", width = 6, height = 6, units = "in", res = 1200)
 depth_SVs %>%
   ggplot(aes(x = mean_depth, y = n, color = data)) +
-    geom_point(size = 2) +
+    geom_point() +
     scale_color_manual(values = c("Delly" = "#7D9D33", "mantaB" = "#CED38C", "mantaJ" = "#DCC949", "Smoove" = "#BCA888", "CuteSV" = "#CD8862", "Sniffles" = "#775B24")) +
     geom_smooth(aes(x = as.numeric(mean_depth)), method = 'lm', se = FALSE) +
-    labs(x = "Mean Individual Depth", y = "Number of SVs", title = "Number of SVs carried by individual kākāpō per Mean Depth", color = "Data Set") +
+    labs(x = "Mean Individual Depth", y = "Number of SVs", title = "A)", color = "Data Set") +
+    theme(plot.title = element_text(size=10)) +
     theme_light()
-#dev.off()
+dev.off()
 
-png("plots/Supplemental_depth_log(counts).png", width = 6, height = 6, units = "in", res = 1200)
-depth_SVs %>%
-  ggplot(aes(x = mean_depth, y = log_counts, color = data)) +
-    geom_point(size = 2) +
+png("plots/Supplemental_Fiordland_depth_counts.png", width = 6, height = 6, units = "in", res = 1200)
+gen_depth_SVs %>%
+  filter(if_any(gen, ~grepl('RH' , .))) %>%
+  mutate(gen = replace(gen, gen == "RH0", "F0")) %>%
+  mutate(gen = replace(gen, gen == "RH1", "F1")) %>%
+  mutate(gen = replace(gen, gen == "RH2", "F2")) %>%
+  ggplot(aes(x = mean_depth, y = n, color = data)) +
+    geom_point(aes(shape = gen)) +
     scale_color_manual(values = c("Delly" = "#7D9D33", "mantaB" = "#CED38C", "mantaJ" = "#DCC949", "Smoove" = "#BCA888", "CuteSV" = "#CD8862", "Sniffles" = "#775B24")) +
     geom_smooth(aes(x = as.numeric(mean_depth)), method = 'lm', se = FALSE) +
-    labs(x = "Mean Individual Depth", y = "Number of SVs", title = "Number of SVs carried by individual kākāpō per Mean Depth", color = "Data Set") +
+    labs(x = "Mean Individual Depth", y = "Number of SVs", title = "B)", color = "Data Set", shape = "Generation") +
+    theme(plot.title = element_text(size = 8)) +
+    theme_light()
+dev.off()
+
+png("plots/Supplemental_Rakiura_depth_counts.png", width = 6, height = 6, units = "in", res = 1200)
+gen_depth_SVs %>%
+  filter(if_any(gen, ~grepl('SI' , .))) %>%
+  mutate(gen = replace(gen, gen == "SI0", "F0")) %>%
+  mutate(gen = replace(gen, gen == "SI1", "F1")) %>%
+  mutate(gen = replace(gen, gen == "SI2", "F2")) %>%
+  ggplot(aes(x = mean_depth, y = n, color = data)) +
+    geom_point(aes(shape = gen)) +
+    scale_color_manual(values = c("Delly" = "#7D9D33", "mantaB" = "#CED38C", "mantaJ" = "#DCC949", "Smoove" = "#BCA888", "CuteSV" = "#CD8862", "Sniffles" = "#775B24")) +
+    geom_smooth(aes(x = as.numeric(mean_depth)), method = 'lm', se = FALSE) +
+    labs(x = "Mean Individual Depth", y = "Number of SVs", title = "C)", color = "Data Set", shape = "Generation") +
+    theme(plot.title = element_text(size=10)) +
     theme_light()
 dev.off()
 ```
