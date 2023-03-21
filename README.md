@@ -1,5 +1,6 @@
 # The promise and challenges of characterising genome-wide structural variants: A case study in a critically endangered parrot
 
+This is the GitHub Repository supporting our submission to the Molecular Ecology Resources Special Issue *Omics Tools for Species Conservation*.  
 DOI: [https://doi.org/10.1111/1755-0998.13783]( https://doi.org/10.1111/1755-0998.13783)
 
 Here are the steps we took to trial different strategies for SV discovery using Illumina and Oxford Nanopore Technology (ONT) sequence data. The raw Illumina reads were preprocessed by [Joseph Guhlin](https://github.com/jguhlin) under the [Kākāpō125+ Sequencing Consortium](https://www.doc.govt.nz/our-work/kakapo-recovery/what-we-do/research-for-the-future/kakapo125-gene-sequencing/). Sequencing coverage for the Illumina data ranged from 9x - 38x with a mean of ~18x, and ranged from 4.2x - 15.8x with a mean of 9.7x coverage for the seven indivudals included for long-read based SV discovery.  
