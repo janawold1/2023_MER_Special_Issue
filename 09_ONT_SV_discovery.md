@@ -1,5 +1,5 @@
 # Long-read SV discovery and genotyping
-Here are some brief notes of how I conducted long-read SV discovery with cuteSV and Sniffles. All initial calls were refined calles with Jasmine.
+Here are some brief notes of how I conducted long-read SV discovery with cuteSV and Sniffles. All SV calls by CuteSV and Sniffles were individually refined with Jasmine prior to comparisons.
 
 ## Initial SV calls with cuteSV and Sniffles 
 Sniffles was run using sensitive parameters an all supporting reads were reported as recommended below:
@@ -11,7 +11,7 @@ cute=/kakapo-data/ONT/winnowmap/cuteSV/
 mref=/kakapo-data/references/kakapo_no_Wchromosome.fna
 fref=/kakapo-data/references/kakapo_full_ref.fa
 
-for male in Bill Blades Gulliver Rangi
+for male in bird_ID
     do
     echo "Running sniffles for ${male}..."
     sniffles --input ${align}${male}_3kb.bam \
@@ -33,7 +33,7 @@ for male in Bill Blades Gulliver Rangi
         ${snif}vcf_for_jasmine/${male}.vcf
 done
 wait
-for female in Kuia Margaret-Maree Sue
+for female in bird_ID
     do
     echo "Running sniffles for ${female}..."
     sniffles --input ${align}${female}_3kb.bam \
