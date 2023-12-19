@@ -104,7 +104,7 @@ Because Jasmine refines SV calls on the individual level, the total number of ra
 bcftools merge -O v -o ${cute}01_cute_SV_rawSVs.vcf ${cute}rawSVs/*norm.vcf.gz
 ```
 ## Running Jasmine
-After SV discovery calling, calls for the same individual using both Sniffles and cuteSV were concatenated into a single VCF for breakpoint refinement and SV normalisation. Below is an example of how jasmine was run for sniffles. Jasmine was run in the same way for both SV discovery pipelines.
+After SV discovery calling, calls for each individual were concatenated into a single VCF for breakpoint refinement and SV normalisation. Below is an example of how jasmine was run for Sniffles, with this being repeated for CuteSV calls. Only SV calls on autosomal scaffolds were used to reduce the affects of poorly resolved regions (e.g., unplaced scaffolds, sex chromosomes).  
 ```
 ref=/kakapo-data/References/kakapo_full_ref.fa
 bam=/kakapo-data/ONT/winnowmap/alignment/bam/
